@@ -60,7 +60,7 @@ func (p *Poller) syncStations(ctx context.Context) {
 		if !wanted[s.StationID] {
 			continue
 		}
-		msg, err := newStationMessage(s)
+		msg, err := newMessage(s)
 		if err != nil {
 			p.log.Error("marshal station", "station", s.StationID, "err", err)
 			continue
@@ -93,7 +93,7 @@ func (p *Poller) pollObservations(ctx context.Context) {
 				continue
 			}
 			for _, s := range series {
-				msg, err := newSeriesMessage(s)
+				msg, err := newMessage(s)
 				if err != nil {
 					p.log.Error("marshal series", "station", stationID, "err", err)
 					continue

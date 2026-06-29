@@ -34,6 +34,8 @@ type InsertObservationParams struct {
 	Correction     *int32    `json:"correction"`
 }
 
+// Insert an observation; on conflict, update the value/quality/correction so
+// re-polling overlapping time windows is idempotent.
 func (q *Queries) InsertObservation(ctx context.Context, arg InsertObservationParams) error {
 	_, err := q.db.Exec(ctx, insertObservation,
 		arg.Time,
@@ -57,6 +59,7 @@ WHERE station_id = $1
 ORDER BY station_id, parameter, time DESC
 `
 
+// Most recent observation for each parameter at a station (one row per parameter).
 func (q *Queries) LatestObservations(ctx context.Context, stationID string) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, latestObservations, stationID)
 	if err != nil {
@@ -94,6 +97,7 @@ FROM stations
 ORDER BY station_id
 `
 
+// List all known stations, ordered by id.
 func (q *Queries) ListStations(ctx context.Context) ([]Station, error) {
 	rows, err := q.db.Query(ctx, listStations)
 	if err != nil {
@@ -139,6 +143,8 @@ type ObservationsByStationParams struct {
 	Time_2    time.Time `json:"time_2"`
 }
 
+// Observations for one station and parameter within an inclusive time range,
+// newest first.
 func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByStationParams) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, observationsByStation,
 		arg.StationID,
@@ -176,6 +182,7 @@ func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByS
 }
 
 const upsertStation = `-- name: UpsertStation :exec
+
 INSERT INTO stations (station_id, name, river_name, latitude, longitude, masl, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, now())
 ON CONFLICT (station_id) DO UPDATE SET
@@ -196,6 +203,9 @@ type UpsertStationParams struct {
 	Masl      *float64 `json:"masl"`
 }
 
+// sqlc query definitions. Each `-- name:` block generates a type-safe Go method
+// in internal/db (regenerate with `make sqlc`).
+// Insert or update a station's metadata, keyed by station_id.
 func (q *Queries) UpsertStation(ctx context.Context, arg UpsertStationParams) error {
 	_, err := q.db.Exec(ctx, upsertStation,
 		arg.StationID,

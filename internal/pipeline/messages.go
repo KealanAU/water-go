@@ -5,8 +5,6 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
-
-	"github.com/kealanclarke/water-go/internal/nve"
 )
 
 // Watermill topics for the ingestion pipeline.
@@ -15,16 +13,9 @@ const (
 	TopicRawObservation = "raw_nve_observation"
 )
 
-func newSeriesMessage(s nve.Series) (*message.Message, error) {
-	payload, err := json.Marshal(s)
-	if err != nil {
-		return nil, err
-	}
-	return message.NewMessage(watermill.NewUUID(), payload), nil
-}
-
-func newStationMessage(s nve.Station) (*message.Message, error) {
-	payload, err := json.Marshal(s)
+// newMessage JSON-encodes v as a Watermill message with a fresh UUID.
+func newMessage[T any](v T) (*message.Message, error) {
+	payload, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
 	}

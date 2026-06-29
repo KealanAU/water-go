@@ -21,8 +21,8 @@ type Config struct {
 
 	// Pipeline
 	PollInterval time.Duration
-	StationIDs []string
-	Parameters []int32
+	StationIDs   []string
+	Parameters   []int32
 	// Lookback is how far back each poll requests observations. The NVE API needs
 	// an explicit start/end interval, which the poller builds from now-Lookback..now.
 	Lookback       time.Duration

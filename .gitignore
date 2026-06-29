@@ -1,19 +1,41 @@
 # Env / secrets
 .env
+.env.*
+!.env.example
 *.tfvars
 !*.tfvars.example
 
-# Binaries
+# Go binaries & build output
 /bin/
 /out/
 /ingester
 /api
+*.exe
+*.test
+*.out
 
-# Terraform
+# Test & coverage
+coverage.*
+*.cover
+
+# Dependency dirs
+/vendor/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Terraform (the lock file is intentionally committed)
 .terraform/
 *.tfstate
 *.tfstate.*
-.terraform.lock.hcl
+crash.log
 
-# OS / editor
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+
+# OS
 .DS_Store
+Thumbs.db

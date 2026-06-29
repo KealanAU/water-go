@@ -1,8 +1,9 @@
+# Common developer tasks. Run `make help` for a summary of targets.
 SQLC_VERSION := v1.27.0
 
 .PHONY: help sqlc tidy build test run-ingester run-api up down logs fmt
 
-help:
+help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 sqlc: ## Generate type-safe DB code from db/queries
