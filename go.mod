@@ -1,4 +1,4 @@
-module github.com/kealanclarke/water-go
+module github.com/KealanAU/water-go
 
 go 1.26
 

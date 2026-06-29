@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kealanclarke/water-go/internal/api"
-	"github.com/kealanclarke/water-go/internal/config"
-	"github.com/kealanclarke/water-go/internal/store"
+	"github.com/KealanAU/water-go/internal/api"
+	"github.com/KealanAU/water-go/internal/config"
+	"github.com/KealanAU/water-go/internal/store"
 )
 
 func main() {

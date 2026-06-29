@@ -14,11 +14,11 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 
-	dbassets "github.com/kealanclarke/water-go/db"
-	"github.com/kealanclarke/water-go/internal/config"
-	"github.com/kealanclarke/water-go/internal/nve"
-	"github.com/kealanclarke/water-go/internal/pipeline"
-	"github.com/kealanclarke/water-go/internal/store"
+	dbassets "github.com/KealanAU/water-go/db"
+	"github.com/KealanAU/water-go/internal/config"
+	"github.com/KealanAU/water-go/internal/nve"
+	"github.com/KealanAU/water-go/internal/pipeline"
+	"github.com/KealanAU/water-go/internal/store"
 )
 
 func main() {

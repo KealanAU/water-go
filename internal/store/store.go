@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/kealanclarke/water-go/internal/db"
+	"github.com/KealanAU/water-go/internal/db"
 )
 
 // Store holds the connection pool and type-safe queries.

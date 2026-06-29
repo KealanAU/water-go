@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/kealanclarke/water-go/internal/db"
-	"github.com/kealanclarke/water-go/internal/store"
+	"github.com/KealanAU/water-go/internal/db"
+	"github.com/KealanAU/water-go/internal/store"
 )
 
 // Server holds dependencies for the HTTP API.

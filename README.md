@@ -1,5 +1,9 @@
 # water-go
 
+> A personal exploration of Go and Terraform, built around a real-world data
+> source: a Go ingestion pipeline with an accompanying AWS infrastructure
+> skeleton in Terraform.
+
 A small Go data pipeline that ingests Norwegian hydrological time-series from the
 [NVE HydAPI](https://hydapi.nve.no) and serves it over a clean HTTP API.
 

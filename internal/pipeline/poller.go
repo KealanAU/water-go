@@ -7,8 +7,8 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/kealanclarke/water-go/internal/config"
-	"github.com/kealanclarke/water-go/internal/nve"
+	"github.com/KealanAU/water-go/internal/config"
+	"github.com/KealanAU/water-go/internal/nve"
 )
 
 // Poller periodically queries the NVE HydAPI and publishes raw messages onto

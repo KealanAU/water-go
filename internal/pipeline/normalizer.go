@@ -6,9 +6,9 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/kealanclarke/water-go/internal/db"
-	"github.com/kealanclarke/water-go/internal/nve"
-	"github.com/kealanclarke/water-go/internal/store"
+	"github.com/KealanAU/water-go/internal/db"
+	"github.com/KealanAU/water-go/internal/nve"
+	"github.com/KealanAU/water-go/internal/store"
 )
 
 // Normalizer is the downstream stage: it consumes raw NVE messages, cleans them,
