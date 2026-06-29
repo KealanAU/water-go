@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform/
+README.md
+bin/
+out/

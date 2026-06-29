@@ -1,0 +1,8 @@
+aws_region  = "eu-north-1"
+environment = "dev"
+
+# Provide your NVE HydAPI key to store it in Secrets Manager (optional).
+nve_api_key = ""
+
+# Set after pushing an image: "<account>.dkr.ecr.<region>.amazonaws.com/water-go:latest"
+container_image = ""

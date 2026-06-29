@@ -1,0 +1,19 @@
+# Env / secrets
+.env
+*.tfvars
+!*.tfvars.example
+
+# Binaries
+/bin/
+/out/
+/ingester
+/api
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# OS / editor
+.DS_Store

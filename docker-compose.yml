@@ -1,0 +1,54 @@
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: water
+      POSTGRES_PASSWORD: water
+      POSTGRES_DB: water
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U water -d water"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ingester:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["/usr/local/bin/ingester"]
+    environment:
+      DATABASE_URL: postgres://water:water@db:5432/water?sslmode=disable
+      NVE_API_KEY: ${NVE_API_KEY}
+      NVE_BASE_URL: ${NVE_BASE_URL:-https://hydapi.nve.no/api/v1}
+      POLL_INTERVAL: ${POLL_INTERVAL:-5m}
+      STATION_IDS: ${STATION_IDS:-2.32.0}
+      PARAMETERS: ${PARAMETERS:-1000,1001,1003}
+      RESOLUTION_TIME: ${RESOLUTION_TIME:-60}
+      REFERENCE_TIME: ${REFERENCE_TIME:-P1D}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["/usr/local/bin/api"]
+    environment:
+      DATABASE_URL: postgres://water:water@db:5432/water?sslmode=disable
+      NVE_API_KEY: ${NVE_API_KEY}
+      API_ADDR: ":8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
