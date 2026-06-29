@@ -97,7 +97,6 @@ FROM stations
 ORDER BY station_id
 `
 
-// List all known stations, ordered by id.
 func (q *Queries) ListStations(ctx context.Context) ([]Station, error) {
 	rows, err := q.db.Query(ctx, listStations)
 	if err != nil {

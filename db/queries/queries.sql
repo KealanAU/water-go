@@ -26,7 +26,6 @@ ON CONFLICT (station_id, parameter, resolution_time, time) DO UPDATE SET
     quality    = EXCLUDED.quality,
     correction = EXCLUDED.correction;
 
--- List all known stations, ordered by id.
 -- name: ListStations :many
 SELECT station_id, name, river_name, latitude, longitude, masl, updated_at
 FROM stations
