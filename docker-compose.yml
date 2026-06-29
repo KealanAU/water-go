@@ -28,7 +28,7 @@ services:
       STATION_IDS: ${STATION_IDS:-2.32.0}
       PARAMETERS: ${PARAMETERS:-1000,1001,1003}
       RESOLUTION_TIME: ${RESOLUTION_TIME:-60}
-      REFERENCE_TIME: ${REFERENCE_TIME:-P1D}
+      LOOKBACK: ${LOOKBACK:-24h}
     depends_on:
       db:
         condition: service_healthy

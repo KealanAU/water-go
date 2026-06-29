@@ -13,5 +13,5 @@ FROM gcr.io/distroless/static-debian12:nonroot AS final
 COPY --from=build /out/ingester /usr/local/bin/ingester
 COPY --from=build /out/api /usr/local/bin/api
 USER nonroot:nonroot
-# Override the command in docker-compose to run the api binary.
-ENTRYPOINT ["/usr/local/bin/ingester"]
+# Default to the ingester; docker-compose overrides `command:` to run the api.
+CMD ["/usr/local/bin/ingester"]

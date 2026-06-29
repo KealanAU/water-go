@@ -21,10 +21,11 @@ type Config struct {
 
 	// Pipeline
 	PollInterval time.Duration
-	StationIDs   []string
-	Parameters   []int32
-	// ReferenceTime is the NVE lookback window for each poll, e.g. "P1D" (ISO-8601 duration).
-	ReferenceTime  string
+	StationIDs []string
+	Parameters []int32
+	// Lookback is how far back each poll requests observations. The NVE API needs
+	// an explicit start/end interval, which the poller builds from now-Lookback..now.
+	Lookback       time.Duration
 	ResolutionTime int32
 
 	// API
@@ -43,7 +44,7 @@ func Load() (*Config, error) {
 		PollInterval:   getEnvDuration("POLL_INTERVAL", 5*time.Minute),
 		StationIDs:     getEnvList("STATION_IDS", []string{"2.32.0"}),
 		Parameters:     getEnvInts("PARAMETERS", []int32{1000, 1001, 1003}),
-		ReferenceTime:  getEnv("REFERENCE_TIME", "P1D"),
+		Lookback:       getEnvDuration("LOOKBACK", 24*time.Hour),
 		ResolutionTime: int32(getEnvInt("RESOLUTION_TIME", 60)),
 		APIAddr:        getEnv("API_ADDR", ":8080"),
 	}

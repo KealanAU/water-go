@@ -51,7 +51,7 @@ curl localhost:8080/stations/2.32.0/latest
 curl "localhost:8080/stations/2.32.0/observations?parameter=1000&from=2026-06-20T00:00:00Z"
 ```
 
-Parameters: `1000` discharge, `1001` water level, `1003` water temperature.
+Parameters: `1000` water level, `1001` discharge, `1003` water temperature.
 
 ## Local development (no Docker)
 

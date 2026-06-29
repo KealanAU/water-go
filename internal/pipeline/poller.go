@@ -75,6 +75,10 @@ func (p *Poller) syncStations(ctx context.Context) {
 }
 
 func (p *Poller) pollObservations(ctx context.Context) {
+	// NVE requires an explicit ISO-8601 start/end interval.
+	now := time.Now().UTC()
+	referenceTime := now.Add(-p.cfg.Lookback).Format(time.RFC3339) + "/" + now.Format(time.RFC3339)
+
 	var published int
 	for _, stationID := range p.cfg.StationIDs {
 		for _, param := range p.cfg.Parameters {
@@ -82,7 +86,7 @@ func (p *Poller) pollObservations(ctx context.Context) {
 				StationID:      stationID,
 				Parameter:      param,
 				ResolutionTime: p.cfg.ResolutionTime,
-				ReferenceTime:  p.cfg.ReferenceTime,
+				ReferenceTime:  referenceTime,
 			})
 			if err != nil {
 				p.log.Error("fetch observations", "station", stationID, "parameter", param, "err", err)

@@ -4,9 +4,9 @@ import "time"
 
 // Parameter codes used by the NVE HydAPI. See https://hydapi.nve.no for the full list.
 const (
-	ParameterDischarge   int32 = 1000 // Vannføring / water discharge (m³/s)
-	ParameterWaterLevel  int32 = 1001 // Vannstand / water stage (m)
-	ParameterWaterTemp   int32 = 1003 // Vanntemperatur / water temperature (°C)
+	ParameterWaterLevel int32 = 1000 // Vannstand / water stage (m)
+	ParameterDischarge  int32 = 1001 // Vannføring / water discharge (m³/s)
+	ParameterWaterTemp  int32 = 1003 // Vanntemperatur / water temperature (°C)
 )
 
 // envelope is the generic NVE response wrapper: { "data": [...] }.
