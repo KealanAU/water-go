@@ -1,4 +1,3 @@
-# Common developer tasks. Run `make help` for a summary of targets.
 SQLC_VERSION := v1.27.0
 
 .PHONY: help sqlc tidy build test run-ingester run-api up down logs fmt

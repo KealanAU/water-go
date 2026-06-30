@@ -70,7 +70,6 @@ func run(logger *slog.Logger) error {
 	client := nve.NewClient(cfg.NVEBaseURL, cfg.NVEAPIKey)
 	poller := pipeline.NewPoller(cfg, client, pubSub, logger)
 
-	// Start the poller once the router is processing.
 	go func() {
 		select {
 		case <-ctx.Done():

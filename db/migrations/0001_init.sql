@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS observations (
     PRIMARY KEY (station_id, parameter, resolution_time, time)
 );
 
--- Convert observations into a hypertable partitioned by time.
 SELECT create_hypertable('observations', 'time', if_not_exists => TRUE);
 
 -- Supports the API's per-station, per-parameter time-range and latest lookups.

@@ -9,12 +9,10 @@ const (
 	ParameterWaterTemp  int32 = 1003 // Vanntemperatur / water temperature (°C)
 )
 
-// envelope is the generic NVE response wrapper: { "data": [...] }.
 type envelope[T any] struct {
 	Data []T `json:"data"`
 }
 
-// Station is a hydrological measurement station.
 type Station struct {
 	StationID   string       `json:"stationId"`
 	StationName string       `json:"stationName"`
@@ -25,14 +23,12 @@ type Station struct {
 	SeriesList  []SeriesInfo `json:"seriesList"`
 }
 
-// SeriesInfo describes one parameter series available at a station.
 type SeriesInfo struct {
 	Parameter        int32  `json:"parameter"`
 	ParameterName    string `json:"parameterName"`
 	ParameterNameEng string `json:"parameterNameEng"`
 }
 
-// Series is one parameter time-series for a station, including its observations.
 type Series struct {
 	StationID        string        `json:"stationId"`
 	StationName      string        `json:"stationName"`
@@ -45,7 +41,6 @@ type Series struct {
 	Observations     []Observation `json:"observations"`
 }
 
-// Observation is a single measured data point.
 type Observation struct {
 	Time       time.Time `json:"time"`
 	Value      *float64  `json:"value"`

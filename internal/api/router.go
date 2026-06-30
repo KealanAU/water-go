@@ -15,18 +15,15 @@ import (
 	"github.com/KealanAU/water-go/internal/store"
 )
 
-// Server holds dependencies for the HTTP API.
 type Server struct {
 	store *store.Store
 	log   *slog.Logger
 }
 
-// NewServer builds the API server.
 func NewServer(s *store.Store, log *slog.Logger) *Server {
 	return &Server{store: s, log: log}
 }
 
-// Routes returns the configured chi router.
 func (s *Server) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)

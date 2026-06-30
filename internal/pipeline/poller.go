@@ -21,13 +21,10 @@ type Poller struct {
 	log       *slog.Logger
 }
 
-// NewPoller constructs a Poller.
 func NewPoller(cfg *config.Config, client *nve.Client, pub message.Publisher, log *slog.Logger) *Poller {
 	return &Poller{cfg: cfg, client: client, publisher: pub, log: log}
 }
 
-// Run syncs station metadata once, then polls observations on PollInterval
-// until the context is cancelled.
 func (p *Poller) Run(ctx context.Context) error {
 	p.syncStations(ctx)
 	p.pollObservations(ctx)

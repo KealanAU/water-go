@@ -59,7 +59,6 @@ WHERE station_id = $1
 ORDER BY station_id, parameter, time DESC
 `
 
-// Most recent observation for each parameter at a station (one row per parameter).
 func (q *Queries) LatestObservations(ctx context.Context, stationID string) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, latestObservations, stationID)
 	if err != nil {
@@ -142,8 +141,6 @@ type ObservationsByStationParams struct {
 	Time_2    time.Time `json:"time_2"`
 }
 
-// Observations for one station and parameter within an inclusive time range,
-// newest first.
 func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByStationParams) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, observationsByStation,
 		arg.StationID,
@@ -204,7 +201,6 @@ type UpsertStationParams struct {
 
 // sqlc query definitions. Each `-- name:` block generates a type-safe Go method
 // in internal/db (regenerate with `make sqlc`).
-// Insert or update a station's metadata, keyed by station_id.
 func (q *Queries) UpsertStation(ctx context.Context, arg UpsertStationParams) error {
 	_, err := q.db.Exec(ctx, upsertStation,
 		arg.StationID,

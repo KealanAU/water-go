@@ -10,16 +10,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config holds all runtime configuration, sourced from environment variables.
 type Config struct {
-	// NVE HydAPI
 	NVEBaseURL string
 	NVEAPIKey  string
 
-	// Database
 	DatabaseURL string
 
-	// Pipeline
 	PollInterval time.Duration
 	StationIDs   []string
 	Parameters   []int32
@@ -28,11 +24,9 @@ type Config struct {
 	Lookback       time.Duration
 	ResolutionTime int32
 
-	// API
 	APIAddr string
 }
 
-// Load reads configuration from the environment, falling back to a .env file if present.
 func Load() (*Config, error) {
 	// Best-effort: a missing .env is not an error (e.g. in containers env vars are injected).
 	_ = godotenv.Load()

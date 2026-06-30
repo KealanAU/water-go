@@ -16,8 +16,6 @@ data "aws_subnets" "default" {
   }
 }
 
-# --- Container registry ------------------------------------------------------
-
 resource "aws_ecr_repository" "app" {
   name                 = var.project_name
   image_tag_mutability = "MUTABLE"
@@ -27,8 +25,6 @@ resource "aws_ecr_repository" "app" {
     scan_on_push = true
   }
 }
-
-# --- Secrets -----------------------------------------------------------------
 
 resource "random_password" "db" {
   length  = 24
@@ -53,8 +49,6 @@ resource "aws_secretsmanager_secret_version" "nve_api_key" {
   secret_id     = aws_secretsmanager_secret.nve_api_key.id
   secret_string = var.nve_api_key
 }
-
-# --- Database ----------------------------------------------------------------
 
 resource "aws_security_group" "db" {
   name        = "${var.project_name}-${var.environment}-db"

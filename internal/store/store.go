@@ -13,13 +13,11 @@ import (
 	"github.com/KealanAU/water-go/internal/db"
 )
 
-// Store holds the connection pool and type-safe queries.
 type Store struct {
 	Pool    *pgxpool.Pool
 	Queries *db.Queries
 }
 
-// New opens a pgx pool against databaseURL and returns a ready Store.
 func New(ctx context.Context, databaseURL string) (*Store, error) {
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
@@ -32,11 +30,9 @@ func New(ctx context.Context, databaseURL string) (*Store, error) {
 	return &Store{Pool: pool, Queries: db.New(pool)}, nil
 }
 
-// Close releases the connection pool.
 func (s *Store) Close() { s.Pool.Close() }
 
-// Migrate applies every migrations/*.sql file (lexically ordered) from the given FS.
-// Migrations are written to be idempotent (IF NOT EXISTS / if_not_exists).
+// Migrations are written to be idempotent (IF NOT EXISTS), so re-running is safe.
 func (s *Store) Migrate(ctx context.Context, migrations fs.FS) error {
 	entries, err := fs.ReadDir(migrations, "migrations")
 	if err != nil {

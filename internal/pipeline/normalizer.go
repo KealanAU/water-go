@@ -19,12 +19,10 @@ type Normalizer struct {
 	log   *slog.Logger
 }
 
-// NewNormalizer constructs a Normalizer.
 func NewNormalizer(s *store.Store, log *slog.Logger) *Normalizer {
 	return &Normalizer{store: s, log: log}
 }
 
-// Register wires the normalizer's handlers onto the Watermill router.
 func (n *Normalizer) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("normalize_stations", TopicRawStations, sub, n.handleStation)
 	router.AddNoPublisherHandler("normalize_observations", TopicRawObservation, sub, n.handleObservation)

@@ -1,8 +1,5 @@
 # syntax=docker/dockerfile:1
 
-# Multi-stage build: compile both binaries, then ship them on a minimal
-# distroless base. The same image runs either binary; the command selects which.
-
 FROM golang:1.26-alpine AS build
 WORKDIR /src
 RUN apk add --no-cache git

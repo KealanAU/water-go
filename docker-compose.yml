@@ -1,7 +1,4 @@
-# Local development stack: TimescaleDB plus the ingester and api binaries.
-# Both app services build from the same image and differ only in `command:`.
 services:
-  # TimescaleDB (Postgres + hypertables). Data persists in the pgdata volume.
   db:
     image: timescale/timescaledb:latest-pg16
     environment:
@@ -19,7 +16,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # Poller + normalizer: fetches from NVE and writes to the database.
   ingester:
     build:
       context: .
@@ -39,7 +35,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Read-only HTTP API over the stored data.
   api:
     build:
       context: .
@@ -56,6 +51,5 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-# Named volume so database contents survive `docker compose down`.
 volumes:
   pgdata:
