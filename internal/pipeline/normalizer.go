@@ -7,6 +7,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 
 	"github.com/KealanAU/water-go/internal/db"
+	"github.com/KealanAU/water-go/internal/metrics"
 	"github.com/KealanAU/water-go/internal/nve"
 	"github.com/KealanAU/water-go/internal/store"
 )
@@ -93,6 +94,7 @@ func (n *Normalizer) handleObservation(msg *message.Message) error {
 			points = append(points, StoredPoint{Time: o.Time, Value: *o.Value})
 		}
 	}
+	metrics.ObservationsStoredAdd(stored)
 	n.log.Debug("stored observations", "station", s.StationID, "parameter", s.Parameter, "count", stored)
 
 	// Fan the stored points out to the anomaly detector. A publish failure here

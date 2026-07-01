@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/cors"
 
 	"github.com/KealanAU/water-go/internal/db"
+	"github.com/KealanAU/water-go/internal/metrics"
 	"github.com/KealanAU/water-go/internal/store"
 )
 
@@ -64,6 +65,8 @@ func (s *Server) Routes() http.Handler {
 	r.Get("/healthz", s.handleLive)
 	// Readiness: pings the DB, 503 when unavailable.
 	r.Get("/readyz", s.handleReady)
+	// Prometheus metrics.
+	r.Handle("/metrics", metrics.Handler())
 
 	r.Route("/stations", func(r chi.Router) {
 		r.Get("/", s.handleListStations)

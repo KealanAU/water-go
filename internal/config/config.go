@@ -39,6 +39,10 @@ type Config struct {
 	APIDefaultPageSize int
 	APIMaxPageSize     int
 
+	// MetricsAddr is the listen address for the ingester's Prometheus metrics
+	// endpoint (/metrics + /healthz).
+	MetricsAddr string
+
 	// Anomaly detection tuning.
 	AnomalyThreshold float64 // |z-score| at/above which a point is an anomaly
 	AnomalyWindow    int     // number of recent points used for rolling stats
@@ -71,6 +75,8 @@ func Load() (*Config, error) {
 		APIAddr:            getEnv("API_ADDR", ":8080"),
 		APIDefaultPageSize: getEnvInt("API_DEFAULT_PAGE_SIZE", 500),
 		APIMaxPageSize:     getEnvInt("API_MAX_PAGE_SIZE", 5000),
+
+		MetricsAddr: getEnv("METRICS_ADDR", ":9090"),
 
 		AnomalyThreshold: getEnvFloat("ANOMALY_THRESHOLD", 3.0),
 		AnomalyWindow:    getEnvInt("ANOMALY_WINDOW", 100),

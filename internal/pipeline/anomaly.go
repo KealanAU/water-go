@@ -9,6 +9,7 @@ import (
 
 	"github.com/KealanAU/water-go/internal/analytics"
 	"github.com/KealanAU/water-go/internal/db"
+	"github.com/KealanAU/water-go/internal/metrics"
 	"github.com/KealanAU/water-go/internal/store"
 )
 
@@ -81,6 +82,7 @@ func (d *AnomalyDetector) handle(msg *message.Message) error {
 			return err // retry
 		}
 
+		metrics.AnomaliesDetected.Inc()
 		d.log.Info("anomaly detected",
 			"station", s.StationID, "parameter", s.Parameter,
 			"time", p.Time, "value", p.Value, "zscore", z, "threshold", d.threshold)

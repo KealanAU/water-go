@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +18,7 @@ import (
 
 	dbassets "github.com/KealanAU/water-go/db"
 	"github.com/KealanAU/water-go/internal/config"
+	"github.com/KealanAU/water-go/internal/metrics"
 	"github.com/KealanAU/water-go/internal/nve"
 	"github.com/KealanAU/water-go/internal/pipeline"
 	"github.com/KealanAU/water-go/internal/store"
@@ -73,6 +76,15 @@ func run(logger *slog.Logger) error {
 	alerter := pipeline.NewAlerter(logger, cfg.AlertWebhookURL)
 	alerter.Register(router, pubSub)
 
+	// Lightweight metrics-only HTTP server. The ingester produces most of the
+	// pipeline metrics, so Prometheus scrapes it here.
+	metricsSrv := startMetricsServer(ctx, cfg.MetricsAddr, logger)
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = metricsSrv.Shutdown(shutdownCtx)
+	}()
+
 	client := nve.NewClient(cfg.NVEBaseURL, cfg.NVEAPIKey,
 		nve.WithMaxRetries(cfg.NVEMaxRetries),
 		nve.WithRateLimit(cfg.NVERateLimit),
@@ -94,6 +106,29 @@ func run(logger *slog.Logger) error {
 
 	logger.Info("ingester running")
 	return router.Run(ctx)
+}
+
+// startMetricsServer launches a background HTTP server exposing Prometheus
+// metrics at /metrics and a liveness probe at /healthz. It shuts down when the
+// signal-driven context is cancelled.
+func startMetricsServer(ctx context.Context, addr string, logger *slog.Logger) *http.Server {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", metrics.Handler())
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+
+	srv := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+
+	go func() {
+		logger.Info("metrics server listening", "addr", addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("metrics server failed", "err", err)
+		}
+	}()
+
+	return srv
 }
 
 func connectWithRetry(ctx context.Context, dsn string, logger *slog.Logger) (*store.Store, error) {

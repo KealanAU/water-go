@@ -9,6 +9,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 
 	"github.com/KealanAU/water-go/internal/config"
+	"github.com/KealanAU/water-go/internal/metrics"
 	"github.com/KealanAU/water-go/internal/nve"
 )
 
@@ -52,7 +53,9 @@ func (p *Poller) Run(ctx context.Context) error {
 // stations), publishes their metadata, and records the effective set on the
 // poller for pollObservations to use.
 func (p *Poller) syncStations(ctx context.Context) {
+	start := time.Now()
 	stations, err := p.client.Stations(ctx, true)
+	metrics.ObserveRequest("stations", start)
 	if err != nil {
 		p.log.Error("station sync failed", "err", err)
 		return
@@ -119,13 +122,17 @@ func (p *Poller) pollObservations(ctx context.Context) {
 	var published int
 	for _, stationID := range stationIDs {
 		for _, param := range p.cfg.Parameters {
+			metrics.PollTotal.Inc()
+			start := time.Now()
 			series, err := p.client.Observations(ctx, nve.ObservationsParams{
 				StationID:      stationID,
 				Parameter:      param,
 				ResolutionTime: p.cfg.ResolutionTime,
 				ReferenceTime:  referenceTime,
 			})
+			metrics.ObserveRequest("observations", start)
 			if err != nil {
+				metrics.IncFetchError(param)
 				p.log.Error("fetch observations", "station", stationID, "parameter", param, "err", err)
 				continue
 			}
@@ -143,5 +150,6 @@ func (p *Poller) pollObservations(ctx context.Context) {
 			}
 		}
 	}
+	metrics.MarkPoll()
 	p.log.Info("polled observations", "messages", published, "stations", len(stationIDs))
 }
