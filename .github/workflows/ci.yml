@@ -47,6 +47,21 @@ jobs:
       # Integration tests are behind a build tag, so a plain run is unit-only.
       - run: go test ./...
 
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # GitHub-hosted runners provide Docker, which testcontainers uses to spin
+      # up TimescaleDB for the integration tier.
+      - run: go test -tags=integration ./...
+
   govulncheck:
     name: Vulnerability scan
     runs-on: ubuntu-latest
