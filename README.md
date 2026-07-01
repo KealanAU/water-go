@@ -1,5 +1,9 @@
 # water-go
 
+[![CI](https://github.com/KealanAU/water-go/actions/workflows/ci.yml/badge.svg)](https://github.com/KealanAU/water-go/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/KealanAU/water-go)](https://goreportcard.com/report/github.com/KealanAU/water-go)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > A personal exploration of Go and Terraform, built around a real-world data
 > source: a Go ingestion pipeline with an accompanying AWS infrastructure
 > skeleton in Terraform.

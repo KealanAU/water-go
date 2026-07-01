@@ -37,6 +37,9 @@ FROM observations
 WHERE station_id = $1
 ORDER BY station_id, parameter, time DESC;
 
+-- Paginated per-station, per-parameter time-range lookup. LIMIT/OFFSET are
+-- always supplied (and clamped by the caller) so the API never returns an
+-- unbounded result set.
 -- name: ObservationsByStation :many
 SELECT time, station_id, parameter, parameter_name, unit, resolution_time, value, quality, correction, ingested_at
 FROM observations
@@ -44,4 +47,5 @@ WHERE station_id = $1
   AND parameter = $2
   AND time >= $3
   AND time <= $4
-ORDER BY time DESC;
+ORDER BY time DESC
+LIMIT $5 OFFSET $6;

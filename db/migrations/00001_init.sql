@@ -1,6 +1,7 @@
 -- TimescaleDB schema for NVE hydrological time-series.
--- Applied at startup by the store's migration runner; statements are idempotent.
+-- Applied at startup by the store's goose migration runner; statements are idempotent.
 
+-- +goose Up
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 
 CREATE TABLE IF NOT EXISTS stations (
@@ -33,3 +34,7 @@ SELECT create_hypertable('observations', 'time', if_not_exists => TRUE);
 -- Supports the API's per-station, per-parameter time-range and latest lookups.
 CREATE INDEX IF NOT EXISTS observations_station_param_idx
     ON observations (station_id, parameter, time DESC);
+
+-- +goose Down
+DROP TABLE IF EXISTS observations;
+DROP TABLE IF EXISTS stations;

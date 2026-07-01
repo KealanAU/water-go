@@ -42,8 +42,11 @@ func run(logger *slog.Logger) error {
 	defer st.Close()
 
 	srv := &http.Server{
-		Addr:              cfg.APIAddr,
-		Handler:           api.NewServer(st, logger).Routes(),
+		Addr: cfg.APIAddr,
+		Handler: api.NewServer(st, logger, api.Options{
+			DefaultPageSize: cfg.APIDefaultPageSize,
+			MaxPageSize:     cfg.APIMaxPageSize,
+		}).Routes(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

@@ -4,11 +4,13 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io/fs"
-	"sort"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib" // database/sql driver ("pgx") for goose
+	"github.com/pressly/goose/v3"
 
 	"github.com/KealanAU/water-go/internal/db"
 )
@@ -32,29 +34,29 @@ func New(ctx context.Context, databaseURL string) (*Store, error) {
 
 func (s *Store) Close() { s.Pool.Close() }
 
-// Migrations are written to be idempotent (IF NOT EXISTS), so re-running is safe.
+// Migrate applies the embedded SQL migrations using goose. goose tracks applied
+// versions in a goose_db_version table and takes a session-level advisory lock,
+// so it is safe to run on every boot and across concurrent instances. The
+// migrations themselves remain idempotent (IF NOT EXISTS), so a database that
+// was previously migrated by the old hand-rolled runner upgrades cleanly.
 func (s *Store) Migrate(ctx context.Context, migrations fs.FS) error {
-	entries, err := fs.ReadDir(migrations, "migrations")
+	goose.SetBaseFS(migrations)
+	defer goose.SetBaseFS(nil)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("store: goose dialect: %w", err)
+	}
+
+	// goose needs a database/sql handle; open one from the pool's DSN via the
+	// pgx stdlib driver rather than sharing the pgxpool.
+	sqlDB, err := sql.Open("pgx", s.Pool.Config().ConnString())
 	if err != nil {
-		return fmt.Errorf("store: read migrations: %w", err)
+		return fmt.Errorf("store: open migration db: %w", err)
 	}
+	defer sqlDB.Close()
 
-	names := make([]string, 0, len(entries))
-	for _, e := range entries {
-		if !e.IsDir() {
-			names = append(names, e.Name())
-		}
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
-		sqlBytes, err := fs.ReadFile(migrations, "migrations/"+name)
-		if err != nil {
-			return fmt.Errorf("store: read %s: %w", name, err)
-		}
-		if _, err := s.Pool.Exec(ctx, string(sqlBytes)); err != nil {
-			return fmt.Errorf("store: apply %s: %w", name, err)
-		}
+	if err := goose.UpContext(ctx, sqlDB, "migrations"); err != nil {
+		return fmt.Errorf("store: apply migrations: %w", err)
 	}
 	return nil
 }

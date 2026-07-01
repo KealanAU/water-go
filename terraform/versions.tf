@@ -11,18 +11,13 @@ terraform {
       version = "~> 3.6"
     }
   }
-
-  # Configure a remote backend before using in a team setting.
-  # backend "s3" {
-  #   bucket = "your-tfstate-bucket"
-  #   key    = "water-go/terraform.tfstate"
-  #   region = "eu-north-1"
-  # }
 }
 
 provider "aws" {
   region = var.aws_region
 
+  # Applied to every resource that supports tagging, so individual resources
+  # only add what's distinctive (e.g. a Name).
   default_tags {
     tags = {
       Project     = var.project_name

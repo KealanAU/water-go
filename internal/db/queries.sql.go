@@ -132,6 +132,7 @@ WHERE station_id = $1
   AND time >= $3
   AND time <= $4
 ORDER BY time DESC
+LIMIT $5 OFFSET $6
 `
 
 type ObservationsByStationParams struct {
@@ -139,14 +140,21 @@ type ObservationsByStationParams struct {
 	Parameter int32     `json:"parameter"`
 	Time      time.Time `json:"time"`
 	Time_2    time.Time `json:"time_2"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
 }
 
+// Paginated per-station, per-parameter time-range lookup. LIMIT/OFFSET are
+// always supplied (and clamped by the caller) so the API never returns an
+// unbounded result set.
 func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByStationParams) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, observationsByStation,
 		arg.StationID,
 		arg.Parameter,
 		arg.Time,
 		arg.Time_2,
+		arg.Limit,
+		arg.Offset,
 	)
 	if err != nil {
 		return nil, err

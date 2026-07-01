@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -19,6 +20,10 @@ type Poller struct {
 	client    *nve.Client
 	publisher message.Publisher
 	log       *slog.Logger
+
+	// stationIDs is the effective set of stations to poll, resolved once at
+	// startup from either the explicit config list or auto-discovery.
+	stationIDs []string
 }
 
 func NewPoller(cfg *config.Config, client *nve.Client, pub message.Publisher, log *slog.Logger) *Poller {
@@ -42,21 +47,37 @@ func (p *Poller) Run(ctx context.Context) error {
 	}
 }
 
+// syncStations fetches active stations, decides which ones to track (either the
+// explicit STATION_IDS list or, in discovery mode, up to MaxStations active
+// stations), publishes their metadata, and records the effective set on the
+// poller for pollObservations to use.
 func (p *Poller) syncStations(ctx context.Context) {
 	stations, err := p.client.Stations(ctx, true)
 	if err != nil {
 		p.log.Error("station sync failed", "err", err)
 		return
 	}
-	wanted := make(map[string]bool, len(p.cfg.StationIDs))
-	for _, id := range p.cfg.StationIDs {
-		wanted[id] = true
-	}
-	var published int
-	for _, s := range stations {
-		if !wanted[s.StationID] {
-			continue
+
+	var tracked []nve.Station
+	if p.cfg.DiscoverStations {
+		tracked = discover(stations, p.cfg.MaxStations)
+		p.log.Info("discovered stations", "count", len(tracked), "max", p.cfg.MaxStations)
+	} else {
+		wanted := make(map[string]bool, len(p.cfg.StationIDs))
+		for _, id := range p.cfg.StationIDs {
+			wanted[id] = true
 		}
+		for _, s := range stations {
+			if wanted[s.StationID] {
+				tracked = append(tracked, s)
+			}
+		}
+	}
+
+	ids := make([]string, 0, len(tracked))
+	var published int
+	for _, s := range tracked {
+		ids = append(ids, s.StationID)
 		msg, err := newMessage(s)
 		if err != nil {
 			p.log.Error("marshal station", "station", s.StationID, "err", err)
@@ -68,7 +89,19 @@ func (p *Poller) syncStations(ctx context.Context) {
 		}
 		published++
 	}
-	p.log.Info("synced stations", "published", published)
+	p.stationIDs = ids
+	p.log.Info("synced stations", "published", published, "tracked", len(ids))
+}
+
+// discover returns up to max active stations in a deterministic order.
+func discover(stations []nve.Station, max int) []nve.Station {
+	sorted := make([]nve.Station, len(stations))
+	copy(sorted, stations)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].StationID < sorted[j].StationID })
+	if max > 0 && len(sorted) > max {
+		sorted = sorted[:max]
+	}
+	return sorted
 }
 
 func (p *Poller) pollObservations(ctx context.Context) {
@@ -76,8 +109,15 @@ func (p *Poller) pollObservations(ctx context.Context) {
 	now := time.Now().UTC()
 	referenceTime := now.Add(-p.cfg.Lookback).Format(time.RFC3339) + "/" + now.Format(time.RFC3339)
 
+	stationIDs := p.stationIDs
+	if len(stationIDs) == 0 && !p.cfg.DiscoverStations {
+		// Fall back to the configured list if station sync has not populated one
+		// (e.g. the initial /Stations call failed) but an explicit list exists.
+		stationIDs = p.cfg.StationIDs
+	}
+
 	var published int
-	for _, stationID := range p.cfg.StationIDs {
+	for _, stationID := range stationIDs {
 		for _, param := range p.cfg.Parameters {
 			series, err := p.client.Observations(ctx, nve.ObservationsParams{
 				StationID:      stationID,
@@ -103,5 +143,5 @@ func (p *Poller) pollObservations(ctx context.Context) {
 			}
 		}
 	}
-	p.log.Info("polled observations", "messages", published)
+	p.log.Info("polled observations", "messages", published, "stations", len(stationIDs))
 }

@@ -16,6 +16,22 @@ variable "environment" {
   default     = "dev"
 }
 
+# --- Networking --------------------------------------------------------------
+
+variable "vpc_cidr" {
+  description = "CIDR block for the dedicated VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "az_count" {
+  description = "Number of Availability Zones to spread subnets across"
+  type        = number
+  default     = 2
+}
+
+# --- Database ----------------------------------------------------------------
+
 variable "db_instance_class" {
   description = "RDS instance class for the TimescaleDB-capable Postgres instance"
   type        = string
@@ -40,6 +56,14 @@ variable "db_username" {
   default     = "water"
 }
 
+variable "db_engine_version" {
+  description = "Postgres major version"
+  type        = string
+  default     = "16"
+}
+
+# --- Secrets -----------------------------------------------------------------
+
 variable "nve_api_key" {
   description = "NVE HydAPI key, stored in AWS Secrets Manager"
   type        = string
@@ -47,8 +71,82 @@ variable "nve_api_key" {
   default     = ""
 }
 
+# --- Compute -----------------------------------------------------------------
+
 variable "container_image" {
-  description = "Container image (ECR URI) for the ingester/api services"
+  description = "Container image (ECR URI) for the ingester/api services. Defaults to the created repo at :latest."
+  type        = string
+  default     = ""
+}
+
+variable "task_cpu" {
+  description = "Fargate task CPU units (1024 = 1 vCPU)"
+  type        = number
+  default     = 256
+}
+
+variable "task_memory" {
+  description = "Fargate task memory in MiB"
+  type        = number
+  default     = 512
+}
+
+variable "api_desired_count" {
+  description = "Number of api tasks to run behind the ALB"
+  type        = number
+  default     = 1
+}
+
+variable "ingester_desired_count" {
+  description = "Number of ingester tasks to run"
+  type        = number
+  default     = 1
+}
+
+variable "api_port" {
+  description = "Port the api container listens on"
+  type        = number
+  default     = 8080
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch Logs retention for the service log groups"
+  type        = number
+  default     = 14
+}
+
+# --- Application tuning (optional container env) ------------------------------
+#
+# These map to the optional env vars the binaries understand. Left empty means
+# "use the binary's own default" — empty values are filtered out before being
+# passed to the container.
+
+variable "poll_interval" {
+  description = "Ingester poll interval (e.g. 15m)"
+  type        = string
+  default     = ""
+}
+
+variable "station_ids" {
+  description = "Comma-separated NVE station IDs to ingest"
+  type        = string
+  default     = ""
+}
+
+variable "parameters" {
+  description = "Comma-separated NVE parameters to fetch"
+  type        = string
+  default     = ""
+}
+
+variable "resolution_time" {
+  description = "NVE resolution time value"
+  type        = string
+  default     = ""
+}
+
+variable "lookback" {
+  description = "Ingester lookback window (e.g. 72h)"
   type        = string
   default     = ""
 }

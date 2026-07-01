@@ -1,8 +1,26 @@
 aws_region  = "eu-north-1"
 environment = "dev"
 
-# Provide your NVE HydAPI key to store it in Secrets Manager (optional).
+# Provide your NVE HydAPI key to store it in Secrets Manager (optional but the
+# ingester needs it to fetch data).
 nve_api_key = ""
 
-# Set after pushing an image: "<account>.dkr.ecr.<region>.amazonaws.com/water-go:latest"
+# Leave empty to use the ECR repo this config creates (<repo>:latest). Set it
+# to pin a specific tag or use an external registry.
 container_image = ""
+
+# --- Optional overrides ------------------------------------------------------
+# vpc_cidr               = "10.0.0.0/16"
+# az_count               = 2
+# db_instance_class      = "db.t4g.micro"
+# task_cpu               = 256
+# task_memory            = 512
+# api_desired_count      = 1
+# ingester_desired_count = 1
+
+# --- Optional ingester/api tuning (empty = use binary defaults) --------------
+# poll_interval   = "15m"
+# station_ids     = "12.209.0,2.32.0"
+# parameters      = "1000,1001"
+# resolution_time = "60"
+# lookback        = "72h"

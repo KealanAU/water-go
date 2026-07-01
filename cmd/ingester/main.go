@@ -67,7 +67,11 @@ func run(logger *slog.Logger) error {
 	normalizer := pipeline.NewNormalizer(st, logger)
 	normalizer.Register(router, pubSub)
 
-	client := nve.NewClient(cfg.NVEBaseURL, cfg.NVEAPIKey)
+	client := nve.NewClient(cfg.NVEBaseURL, cfg.NVEAPIKey,
+		nve.WithMaxRetries(cfg.NVEMaxRetries),
+		nve.WithRateLimit(cfg.NVERateLimit),
+		nve.WithTimeout(cfg.NVETimeout),
+	)
 	poller := pipeline.NewPoller(cfg, client, pubSub, logger)
 
 	go func() {
