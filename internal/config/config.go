@@ -38,6 +38,11 @@ type Config struct {
 	// API pagination bounds for the observations endpoint.
 	APIDefaultPageSize int
 	APIMaxPageSize     int
+
+	// Anomaly detection tuning.
+	AnomalyThreshold float64 // |z-score| at/above which a point is an anomaly
+	AnomalyWindow    int     // number of recent points used for rolling stats
+	AlertWebhookURL  string  // optional: POST alert JSON here (empty disables)
 }
 
 func Load() (*Config, error) {
@@ -66,6 +71,10 @@ func Load() (*Config, error) {
 		APIAddr:            getEnv("API_ADDR", ":8080"),
 		APIDefaultPageSize: getEnvInt("API_DEFAULT_PAGE_SIZE", 500),
 		APIMaxPageSize:     getEnvInt("API_MAX_PAGE_SIZE", 5000),
+
+		AnomalyThreshold: getEnvFloat("ANOMALY_THRESHOLD", 3.0),
+		AnomalyWindow:    getEnvInt("ANOMALY_WINDOW", 100),
+		AlertWebhookURL:  os.Getenv("ALERT_WEBHOOK_URL"),
 	}
 
 	if cfg.NVEAPIKey == "" {
@@ -79,6 +88,12 @@ func Load() (*Config, error) {
 	}
 	if cfg.APIDefaultPageSize < 1 || cfg.APIDefaultPageSize > cfg.APIMaxPageSize {
 		cfg.APIDefaultPageSize = cfg.APIMaxPageSize
+	}
+	if cfg.AnomalyThreshold <= 0 {
+		cfg.AnomalyThreshold = 3.0
+	}
+	if cfg.AnomalyWindow < 2 {
+		cfg.AnomalyWindow = 2
 	}
 	return cfg, nil
 }

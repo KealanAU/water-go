@@ -16,11 +16,12 @@ import (
 // timezone-aware (RFC3339); values/quality may be null and are stored as such.
 type Normalizer struct {
 	store *store.Store
+	pub   message.Publisher
 	log   *slog.Logger
 }
 
-func NewNormalizer(s *store.Store, log *slog.Logger) *Normalizer {
-	return &Normalizer{store: s, log: log}
+func NewNormalizer(s *store.Store, pub message.Publisher, log *slog.Logger) *Normalizer {
+	return &Normalizer{store: s, pub: pub, log: log}
 }
 
 func (n *Normalizer) Register(router *message.Router, sub message.Subscriber) {
@@ -69,6 +70,7 @@ func (n *Normalizer) handleObservation(msg *message.Message) error {
 	}
 
 	var stored int
+	points := make([]StoredPoint, 0, len(s.Observations))
 	for _, o := range s.Observations {
 		err := n.store.Queries.InsertObservation(ctx, db.InsertObservationParams{
 			Time:           o.Time,
@@ -86,7 +88,29 @@ func (n *Normalizer) handleObservation(msg *message.Message) error {
 			return err
 		}
 		stored++
+		// Only points with an actual value can feed anomaly detection.
+		if o.Value != nil {
+			points = append(points, StoredPoint{Time: o.Time, Value: *o.Value})
+		}
 	}
 	n.log.Debug("stored observations", "station", s.StationID, "parameter", s.Parameter, "count", stored)
+
+	// Fan the stored points out to the anomaly detector. A publish failure here
+	// must not undo the durable write, so we log and move on rather than retry.
+	if n.pub != nil && len(points) > 0 {
+		msg, err := newMessage(StoredSeries{
+			StationID:     s.StationID,
+			Parameter:     s.Parameter,
+			ParameterName: s.ParameterName,
+			Points:        points,
+		})
+		if err != nil {
+			n.log.Error("marshal stored series", "station", s.StationID, "err", err)
+			return nil
+		}
+		if err := n.pub.Publish(TopicStoredObservation, msg); err != nil {
+			n.log.Error("publish stored series", "station", s.StationID, "err", err)
+		}
+	}
 	return nil
 }

@@ -8,6 +8,19 @@ import (
 	"time"
 )
 
+type Anomaly struct {
+	Time          time.Time `json:"time"`
+	StationID     string    `json:"station_id"`
+	Parameter     int32     `json:"parameter"`
+	ParameterName string    `json:"parameter_name"`
+	Value         float64   `json:"value"`
+	Mean          float64   `json:"mean"`
+	Stddev        float64   `json:"stddev"`
+	Zscore        float64   `json:"zscore"`
+	Threshold     float64   `json:"threshold"`
+	DetectedAt    time.Time `json:"detected_at"`
+}
+
 type Observation struct {
 	Time           time.Time `json:"time"`
 	StationID      string    `json:"station_id"`

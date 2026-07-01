@@ -10,6 +10,44 @@ import (
 	"time"
 )
 
+const insertAnomaly = `-- name: InsertAnomaly :exec
+INSERT INTO anomalies (
+    time, station_id, parameter, parameter_name, value, mean, stddev, zscore, threshold
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+ON CONFLICT (station_id, parameter, time) DO NOTHING
+`
+
+type InsertAnomalyParams struct {
+	Time          time.Time `json:"time"`
+	StationID     string    `json:"station_id"`
+	Parameter     int32     `json:"parameter"`
+	ParameterName string    `json:"parameter_name"`
+	Value         float64   `json:"value"`
+	Mean          float64   `json:"mean"`
+	Stddev        float64   `json:"stddev"`
+	Zscore        float64   `json:"zscore"`
+	Threshold     float64   `json:"threshold"`
+}
+
+// Insert a detected anomaly; on conflict keep the existing row so re-processing
+// overlapping windows is idempotent.
+func (q *Queries) InsertAnomaly(ctx context.Context, arg InsertAnomalyParams) error {
+	_, err := q.db.Exec(ctx, insertAnomaly,
+		arg.Time,
+		arg.StationID,
+		arg.Parameter,
+		arg.ParameterName,
+		arg.Value,
+		arg.Mean,
+		arg.Stddev,
+		arg.Zscore,
+		arg.Threshold,
+	)
+	return err
+}
+
 const insertObservation = `-- name: InsertObservation :exec
 INSERT INTO observations (
     time, station_id, parameter, parameter_name, unit, resolution_time, value, quality, correction
@@ -79,6 +117,51 @@ func (q *Queries) LatestObservations(ctx context.Context, stationID string) ([]O
 			&i.Quality,
 			&i.Correction,
 			&i.IngestedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAnomaliesByStation = `-- name: ListAnomaliesByStation :many
+SELECT time, station_id, parameter, parameter_name, value, mean, stddev, zscore, threshold, detected_at
+FROM anomalies
+WHERE station_id = $1
+ORDER BY time DESC
+LIMIT $2
+`
+
+type ListAnomaliesByStationParams struct {
+	StationID string `json:"station_id"`
+	Limit     int32  `json:"limit"`
+}
+
+// Recent anomalies for a station, newest first, bounded by the caller's limit.
+func (q *Queries) ListAnomaliesByStation(ctx context.Context, arg ListAnomaliesByStationParams) ([]Anomaly, error) {
+	rows, err := q.db.Query(ctx, listAnomaliesByStation, arg.StationID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Anomaly
+	for rows.Next() {
+		var i Anomaly
+		if err := rows.Scan(
+			&i.Time,
+			&i.StationID,
+			&i.Parameter,
+			&i.ParameterName,
+			&i.Value,
+			&i.Mean,
+			&i.Stddev,
+			&i.Zscore,
+			&i.Threshold,
+			&i.DetectedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -178,6 +261,44 @@ func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByS
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const recentValues = `-- name: RecentValues :many
+SELECT value
+FROM observations
+WHERE station_id = $1
+  AND parameter = $2
+  AND value IS NOT NULL
+ORDER BY time DESC
+LIMIT $3
+`
+
+type RecentValuesParams struct {
+	StationID string `json:"station_id"`
+	Parameter int32  `json:"parameter"`
+	Limit     int32  `json:"limit"`
+}
+
+// Recent non-null values for a (station, parameter) window, newest first. Feeds
+// the analytics rolling mean/stddev/z-score computation; LIMIT bounds the window.
+func (q *Queries) RecentValues(ctx context.Context, arg RecentValuesParams) ([]*float64, error) {
+	rows, err := q.db.Query(ctx, recentValues, arg.StationID, arg.Parameter, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*float64
+	for rows.Next() {
+		var value *float64
+		if err := rows.Scan(&value); err != nil {
+			return nil, err
+		}
+		items = append(items, value)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

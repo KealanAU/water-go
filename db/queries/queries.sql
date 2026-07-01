@@ -49,3 +49,32 @@ WHERE station_id = $1
   AND time <= $4
 ORDER BY time DESC
 LIMIT $5 OFFSET $6;
+
+-- Recent non-null values for a (station, parameter) window, newest first. Feeds
+-- the analytics rolling mean/stddev/z-score computation; LIMIT bounds the window.
+-- name: RecentValues :many
+SELECT value
+FROM observations
+WHERE station_id = $1
+  AND parameter = $2
+  AND value IS NOT NULL
+ORDER BY time DESC
+LIMIT $3;
+
+-- Insert a detected anomaly; on conflict keep the existing row so re-processing
+-- overlapping windows is idempotent.
+-- name: InsertAnomaly :exec
+INSERT INTO anomalies (
+    time, station_id, parameter, parameter_name, value, mean, stddev, zscore, threshold
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+ON CONFLICT (station_id, parameter, time) DO NOTHING;
+
+-- Recent anomalies for a station, newest first, bounded by the caller's limit.
+-- name: ListAnomaliesByStation :many
+SELECT time, station_id, parameter, parameter_name, value, mean, stddev, zscore, threshold, detected_at
+FROM anomalies
+WHERE station_id = $1
+ORDER BY time DESC
+LIMIT $2;

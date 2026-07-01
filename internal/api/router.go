@@ -69,6 +69,7 @@ func (s *Server) Routes() http.Handler {
 		r.Get("/", s.handleListStations)
 		r.Get("/{id}/latest", s.handleLatest)
 		r.Get("/{id}/observations", s.handleObservations)
+		r.Get("/{id}/anomalies", s.handleAnomalies)
 	})
 	return r
 }
@@ -171,6 +172,26 @@ func (s *Server) handleObservations(w http.ResponseWriter, r *http.Request) {
 		Time_2:    to,
 		Limit:     limit,
 		Offset:    offset,
+	})
+	if err != nil {
+		s.serverError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, rows)
+}
+
+func (s *Server) handleAnomalies(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	limit, _, err := s.pagination(r)
+	if err != nil {
+		badRequest(w, err.Error())
+		return
+	}
+
+	rows, err := s.store.Queries.ListAnomaliesByStation(r.Context(), db.ListAnomaliesByStationParams{
+		StationID: id,
+		Limit:     limit,
 	})
 	if err != nil {
 		s.serverError(w, err)

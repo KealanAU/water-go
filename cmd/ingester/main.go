@@ -64,8 +64,14 @@ func run(logger *slog.Logger) error {
 		middleware.Retry{MaxRetries: 3, InitialInterval: time.Second, Logger: wmLogger}.Middleware,
 	)
 
-	normalizer := pipeline.NewNormalizer(st, logger)
+	normalizer := pipeline.NewNormalizer(st, pubSub, logger)
 	normalizer.Register(router, pubSub)
+
+	detector := pipeline.NewAnomalyDetector(st, pubSub, logger, cfg.AnomalyThreshold, cfg.AnomalyWindow)
+	detector.Register(router, pubSub)
+
+	alerter := pipeline.NewAlerter(logger, cfg.AlertWebhookURL)
+	alerter.Register(router, pubSub)
 
 	client := nve.NewClient(cfg.NVEBaseURL, cfg.NVEAPIKey,
 		nve.WithMaxRetries(cfg.NVEMaxRetries),
