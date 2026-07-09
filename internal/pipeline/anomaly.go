@@ -24,6 +24,8 @@ type AnomalyDetector struct {
 	window    int32
 }
 
+// NewAnomalyDetector returns a detector flagging |z-score| >= threshold over a
+// rolling window (floored to 2).
 func NewAnomalyDetector(s *store.Store, pub message.Publisher, log *slog.Logger, threshold float64, window int) *AnomalyDetector {
 	if window < 2 {
 		window = 2
@@ -31,6 +33,7 @@ func NewAnomalyDetector(s *store.Store, pub message.Publisher, log *slog.Logger,
 	return &AnomalyDetector{store: s, pub: pub, log: log, threshold: threshold, window: int32(window)}
 }
 
+// Register attaches the detector's handler to the router.
 func (d *AnomalyDetector) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("detect_anomalies", TopicStoredObservation, sub, d.handle)
 }

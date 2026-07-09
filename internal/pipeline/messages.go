@@ -8,6 +8,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
+// Watermill topics connecting the pipeline stages.
 const (
 	TopicRawStations    = "raw_nve_station"
 	TopicRawObservation = "raw_nve_observation"

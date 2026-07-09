@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testAlert() Alert {
-	return Alert{
+func testAlert() *Alert {
+	return &Alert{
 		StationID:     "1.2.3",
 		Parameter:     1000,
 		ParameterName: "Water level",
@@ -31,7 +31,7 @@ func testAlert() Alert {
 	}
 }
 
-func alertMessage(t *testing.T, a Alert) *message.Message {
+func alertMessage(t *testing.T, a *Alert) *message.Message {
 	t.Helper()
 	payload, err := json.Marshal(a)
 	require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestAlerterWebhookSuccess(t *testing.T) {
 
 func TestAlerterWebhookNon2xxIsAcked(t *testing.T) {
 	var calls int32
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		atomic.AddInt32(&calls, 1)
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
@@ -88,7 +88,7 @@ func TestAlerterPoisonMessageDropped(t *testing.T) {
 
 func TestPostWebhookTransportError(t *testing.T) {
 	// Point at a server we immediately close to force a connection error.
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 	url := srv.URL
 	srv.Close()
 
@@ -98,7 +98,7 @@ func TestPostWebhookTransportError(t *testing.T) {
 }
 
 func TestPostWebhookNon2xxReturnsError(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadGateway)
 	}))
 	defer srv.Close()

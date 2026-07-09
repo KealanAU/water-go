@@ -1,3 +1,5 @@
+// Package config loads environment-based configuration for both binaries,
+// reading a local .env file when present.
 package config
 
 import (
@@ -10,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Config holds all runtime settings for the ingester and the API.
 type Config struct {
 	NVEBaseURL string
 	NVEAPIKey  string
@@ -54,6 +57,8 @@ type Config struct {
 	AlertWebhookURL  string  // optional: POST alert JSON here (empty disables)
 }
 
+// Load reads configuration from the environment, applying defaults and
+// clamping out-of-range values.
 func Load() (*Config, error) {
 	// Best-effort: a missing .env is not an error (e.g. in containers env vars are injected).
 	_ = godotenv.Load()

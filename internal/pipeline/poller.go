@@ -27,10 +27,13 @@ type Poller struct {
 	stationIDs []string
 }
 
+// NewPoller returns a Poller that publishes via pub.
 func NewPoller(cfg *config.Config, client *nve.Client, pub message.Publisher, log *slog.Logger) *Poller {
 	return &Poller{cfg: cfg, client: client, publisher: pub, log: log}
 }
 
+// Run polls immediately, then on every tick of the configured interval until
+// ctx is canceled.
 func (p *Poller) Run(ctx context.Context) error {
 	p.syncStations(ctx)
 	p.pollObservations(ctx)
@@ -96,13 +99,13 @@ func (p *Poller) syncStations(ctx context.Context) {
 	p.log.Info("synced stations", "published", published, "tracked", len(ids))
 }
 
-// discover returns up to max active stations in a deterministic order.
-func discover(stations []nve.Station, max int) []nve.Station {
+// discover returns up to limit active stations in a deterministic order.
+func discover(stations []nve.Station, limit int) []nve.Station {
 	sorted := make([]nve.Station, len(stations))
 	copy(sorted, stations)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].StationID < sorted[j].StationID })
-	if max > 0 && len(sorted) > max {
-		sorted = sorted[:max]
+	if limit > 0 && len(sorted) > limit {
+		sorted = sorted[:limit]
 	}
 	return sorted
 }
@@ -136,8 +139,8 @@ func (p *Poller) pollObservations(ctx context.Context) {
 				p.log.Error("fetch observations", "station", stationID, "parameter", param, "err", err)
 				continue
 			}
-			for _, s := range series {
-				msg, err := newMessage(s)
+			for i := range series {
+				msg, err := newMessage(series[i])
 				if err != nil {
 					p.log.Error("marshal series", "station", stationID, "err", err)
 					continue
