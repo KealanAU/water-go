@@ -42,6 +42,9 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	if err := cfg.RequireNVEAPIKey(); err != nil {
+		return err
+	}
 
 	st, err := connectWithRetry(ctx, cfg.DatabaseURL, logger)
 	if err != nil {
@@ -56,7 +59,7 @@ func run(logger *slog.Logger) error {
 
 	wmLogger := watermill.NewSlogLogger(logger)
 	pubSub := gochannel.NewGoChannel(gochannel.Config{}, wmLogger)
-	defer pubSub.Close()
+	defer func() { _ = pubSub.Close() }()
 
 	router, err := message.NewRouter(message.RouterConfig{}, wmLogger)
 	if err != nil {
@@ -78,7 +81,7 @@ func run(logger *slog.Logger) error {
 
 	// Lightweight metrics-only HTTP server. The ingester produces most of the
 	// pipeline metrics, so Prometheus scrapes it here.
-	metricsSrv := startMetricsServer(ctx, cfg.MetricsAddr, logger)
+	metricsSrv := startMetricsServer(cfg.MetricsAddr, logger)
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -109,9 +112,9 @@ func run(logger *slog.Logger) error {
 }
 
 // startMetricsServer launches a background HTTP server exposing Prometheus
-// metrics at /metrics and a liveness probe at /healthz. It shuts down when the
-// signal-driven context is cancelled.
-func startMetricsServer(ctx context.Context, addr string, logger *slog.Logger) *http.Server {
+// metrics at /metrics and a liveness probe at /healthz. The caller shuts it
+// down via the returned server.
+func startMetricsServer(addr string, logger *slog.Logger) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", metrics.Handler())
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {

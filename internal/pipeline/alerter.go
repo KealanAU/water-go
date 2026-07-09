@@ -1,3 +1,5 @@
+// Package pipeline contains the Watermill ingestion stages: poller,
+// normalizer, anomaly detector, and alerter.
 package pipeline
 
 import (
@@ -24,6 +26,7 @@ type Alerter struct {
 	client     *http.Client
 }
 
+// NewAlerter returns an Alerter; an empty webhookURL disables webhook delivery.
 func NewAlerter(log *slog.Logger, webhookURL string) *Alerter {
 	return &Alerter{
 		log:        log,
@@ -32,6 +35,7 @@ func NewAlerter(log *slog.Logger, webhookURL string) *Alerter {
 	}
 }
 
+// Register attaches the alerter's handler to the router.
 func (a *Alerter) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("dispatch_alerts", TopicAlert, sub, a.handle)
 }
@@ -85,7 +89,7 @@ func (a *Alerter) postWebhook(ctx context.Context, payload []byte) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("webhook returned status %d", resp.StatusCode)
 	}

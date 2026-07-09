@@ -21,7 +21,7 @@ var (
 		Help: "Total number of NVE observation fetches attempted.",
 	})
 
-	// FetchErrors counts failed NVE fetches, labelled by parameter.
+	// FetchErrors counts failed NVE fetches, labeled by parameter.
 	FetchErrors = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "nve_fetch_errors_total",
 		Help: "Total number of failed NVE fetches.",

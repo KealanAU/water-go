@@ -18,6 +18,7 @@ import (
 	"github.com/KealanAU/water-go/internal/store"
 )
 
+// Server holds the API's dependencies and request-handling settings.
 type Server struct {
 	store *store.Store
 	log   *slog.Logger
@@ -37,6 +38,8 @@ type Options struct {
 	APIRateBurst    int
 }
 
+// NewServer returns a Server over the given store, clamping invalid pagination
+// bounds in opts to sane values.
 func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 	if opts.MaxPageSize < 1 {
 		opts.MaxPageSize = 5000
@@ -54,6 +57,8 @@ func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 	}
 }
 
+// Routes builds the chi handler: public health/metrics endpoints plus the
+// auth- and rate-limited data endpoints.
 func (s *Server) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -119,7 +124,7 @@ func (s *Server) requestLogger(next http.Handler) http.Handler {
 
 // handleLive is the liveness probe: it reports the process is up without
 // touching any dependency, so it stays 200 even when the DB is down.
-func (s *Server) handleLive(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleLive(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 

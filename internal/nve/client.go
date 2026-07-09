@@ -28,6 +28,7 @@ const (
 	defaultBackoffMaxWait = 30 * time.Second
 )
 
+// Client calls the NVE HydAPI with client-side rate limiting and retries.
 type Client struct {
 	baseURL    string
 	apiKey     string
@@ -39,6 +40,7 @@ type Client struct {
 	limiter     *rate.Limiter
 }
 
+// Option customizes a Client.
 type Option func(*Client)
 
 // WithHTTPClient overrides the default HTTP client (e.g. for tests).
@@ -82,6 +84,7 @@ func WithRateLimit(rps float64) Option {
 	}
 }
 
+// NewClient returns a Client for the API at baseURL, authenticating with apiKey.
 func NewClient(baseURL, apiKey string, opts ...Option) *Client {
 	c := &Client{
 		baseURL:     strings.TrimRight(baseURL, "/"),
@@ -98,6 +101,7 @@ func NewClient(baseURL, apiKey string, opts ...Option) *Client {
 	return c
 }
 
+// Stations lists stations, optionally restricted to active ones.
 func (c *Client) Stations(ctx context.Context, activeOnly bool) ([]Station, error) {
 	q := url.Values{}
 	if activeOnly {
@@ -106,6 +110,7 @@ func (c *Client) Stations(ctx context.Context, activeOnly bool) ([]Station, erro
 	return doList[Station](ctx, c, "/Stations", q)
 }
 
+// ObservationsParams selects the series returned by Observations.
 type ObservationsParams struct {
 	StationID      string
 	Parameter      int32
@@ -113,6 +118,7 @@ type ObservationsParams struct {
 	ReferenceTime  string // ISO-8601 duration (e.g. "P1D") or interval ("start/end")
 }
 
+// Observations fetches observation series for one station, parameter, and resolution.
 func (c *Client) Observations(ctx context.Context, p ObservationsParams) ([]Series, error) {
 	q := url.Values{}
 	q.Set("StationId", p.StationID)
@@ -134,7 +140,7 @@ func doList[T any](ctx context.Context, c *Client, path string, q url.Values) ([
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 
 	var env envelope[T]
 	if err := json.NewDecoder(body).Decode(&env); err != nil {
@@ -147,8 +153,6 @@ func doList[T any](ctx context.Context, c *Client, path string, q url.Values) ([
 // backoff (with jitter) on retryable failures. The returned body must be closed
 // by the caller. Non-retryable failures return immediately.
 func (c *Client) get(ctx context.Context, path, u string) (io.ReadCloser, error) {
-	var lastErr error
-
 	for attempt := 0; ; attempt++ {
 		if c.limiter != nil {
 			if err := c.limiter.Wait(ctx); err != nil {
@@ -166,12 +170,8 @@ func (c *Client) get(ctx context.Context, path, u string) (io.ReadCloser, error)
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
 			// Network/transport error: retryable unless the context is done.
-			if ctx.Err() != nil {
+			if ctx.Err() != nil || attempt >= c.maxRetries {
 				return nil, fmt.Errorf("nve: %s: %w", path, err)
-			}
-			lastErr = fmt.Errorf("nve: %s: %w", path, err)
-			if attempt >= c.maxRetries {
-				return nil, lastErr
 			}
 			if werr := c.wait(ctx, attempt, 0); werr != nil {
 				return nil, werr
@@ -186,12 +186,11 @@ func (c *Client) get(ctx context.Context, path, u string) (io.ReadCloser, error)
 		// Drain+close the body before retrying so the connection can be reused.
 		retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"))
 		_, _ = io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if !isRetryable(resp.StatusCode) || attempt >= c.maxRetries {
 			return nil, fmt.Errorf("nve: %s: unexpected status %s", path, resp.Status)
 		}
-		lastErr = fmt.Errorf("nve: %s: unexpected status %s", path, resp.Status)
 		if werr := c.wait(ctx, attempt, retryAfter); werr != nil {
 			return nil, werr
 		}
