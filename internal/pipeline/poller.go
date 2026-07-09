@@ -27,7 +27,6 @@ type Poller struct {
 	stationIDs []string
 }
 
-// NewPoller returns a Poller that publishes via pub.
 func NewPoller(cfg *config.Config, client *nve.Client, pub message.Publisher, log *slog.Logger) *Poller {
 	return &Poller{cfg: cfg, client: client, publisher: pub, log: log}
 }

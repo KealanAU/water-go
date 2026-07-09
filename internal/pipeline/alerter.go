@@ -35,7 +35,6 @@ func NewAlerter(log *slog.Logger, webhookURL string) *Alerter {
 	}
 }
 
-// Register attaches the alerter's handler to the router.
 func (a *Alerter) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("dispatch_alerts", TopicAlert, sub, a.handle)
 }

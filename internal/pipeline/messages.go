@@ -8,15 +8,13 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
-// Watermill topics connecting the pipeline stages.
 const (
 	TopicRawStations    = "raw_nve_station"
 	TopicRawObservation = "raw_nve_observation"
 	// TopicStoredObservation carries points the Normalizer has successfully
 	// persisted, so downstream stages (anomaly detection) can react to them.
 	TopicStoredObservation = "stored_observation"
-	// TopicAlert carries alert payloads emitted when an anomaly is detected.
-	TopicAlert = "alert"
+	TopicAlert             = "alert"
 )
 
 // StoredSeries is published on TopicStoredObservation after the Normalizer
@@ -29,14 +27,12 @@ type StoredSeries struct {
 	Points        []StoredPoint `json:"points"`
 }
 
-// StoredPoint is a single persisted observation value at a timestamp.
 type StoredPoint struct {
 	Time  time.Time `json:"time"`
 	Value float64   `json:"value"`
 }
 
-// Alert is the payload published on TopicAlert when an anomaly is detected and
-// dispatched by the Alerter (logged, and optionally POSTed to a webhook).
+// Alert is the payload published on TopicAlert when an anomaly is detected.
 type Alert struct {
 	StationID     string    `json:"station_id"`
 	Parameter     int32     `json:"parameter"`

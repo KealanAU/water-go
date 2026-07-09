@@ -13,7 +13,6 @@ type envelope[T any] struct {
 	Data []T `json:"data"`
 }
 
-// Station is an NVE measurement station and the series it offers.
 type Station struct {
 	StationID   string       `json:"stationId"`
 	StationName string       `json:"stationName"`
@@ -24,14 +23,12 @@ type Station struct {
 	SeriesList  []SeriesInfo `json:"seriesList"`
 }
 
-// SeriesInfo identifies a parameter series available at a station.
 type SeriesInfo struct {
 	Parameter        int32  `json:"parameter"`
 	ParameterName    string `json:"parameterName"`
 	ParameterNameEng string `json:"parameterNameEng"`
 }
 
-// Series holds the observations for one station, parameter, and resolution.
 type Series struct {
 	StationID        string        `json:"stationId"`
 	StationName      string        `json:"stationName"`

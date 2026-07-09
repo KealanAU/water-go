@@ -1,5 +1,4 @@
 locals {
-  # Fall back to the repo we create if no explicit image is supplied.
   container_image = var.container_image != "" ? var.container_image : "${aws_ecr_repository.app.repository_url}:latest"
 
   # Optional tuning env vars — only forward the ones actually set, so empty
@@ -21,9 +20,7 @@ locals {
     { name = "API_RATE_BURST", value = tostring(var.api_rate_burst) },
   ]
 
-  # Secrets injected via valueFrom (never plaintext in the task definition).
-  # Both services need the DB URL; only the ingester talks to NVE; API auth and
-  # alert webhook secrets are injected only when configured.
+  # Injected via valueFrom so secret values never appear in the task definition.
   db_secret = {
     name      = "DATABASE_URL"
     valueFrom = aws_secretsmanager_secret.database_url.arn
@@ -61,7 +58,6 @@ resource "aws_security_group" "ecs_tasks" {
   description = "ECS task ENIs"
   vpc_id      = module.vpc.vpc_id
 
-  # Only the ALB may reach the api container port.
   ingress {
     description     = "api from ALB"
     from_port       = var.api_port

@@ -18,7 +18,6 @@ import (
 	"github.com/KealanAU/water-go/internal/store"
 )
 
-// Server holds the API's dependencies and request-handling settings.
 type Server struct {
 	store *store.Store
 	log   *slog.Logger
@@ -29,7 +28,6 @@ type Server struct {
 	rateLimiter     *clientRateLimiter
 }
 
-// Options configures API behavior such as pagination bounds.
 type Options struct {
 	DefaultPageSize int
 	MaxPageSize     int
@@ -38,8 +36,7 @@ type Options struct {
 	APIRateBurst    int
 }
 
-// NewServer returns a Server over the given store, clamping invalid pagination
-// bounds in opts to sane values.
+// NewServer clamps invalid pagination bounds in opts to sane values.
 func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 	if opts.MaxPageSize < 1 {
 		opts.MaxPageSize = 5000
@@ -57,8 +54,6 @@ func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 	}
 }
 
-// Routes builds the chi handler: public health/metrics endpoints plus the
-// auth- and rate-limited data endpoints.
 func (s *Server) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -74,11 +69,8 @@ func (s *Server) Routes() http.Handler {
 	}))
 	r.Use(middleware.Timeout(15 * time.Second))
 
-	// Liveness: always 200, no dependencies touched.
 	r.Get("/healthz", s.handleLive)
-	// Readiness: pings the DB, 503 when unavailable.
 	r.Get("/readyz", s.handleReady)
-	// Prometheus metrics.
 	r.Handle("/metrics", metrics.Handler())
 
 	r.Group(func(r chi.Router) {
@@ -94,7 +86,6 @@ func (s *Server) Routes() http.Handler {
 	return r
 }
 
-// requestLogger logs one structured line per request via slog.
 func (s *Server) requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -128,8 +119,6 @@ func (s *Server) handleLive(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// handleReady is the readiness probe: it pings the DB and returns 503 if the
-// datastore is unreachable.
 func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.Pool.Ping(r.Context()); err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "db unavailable"})
@@ -230,9 +219,6 @@ func (s *Server) handleAnomalies(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, rows)
 }
 
-// pagination parses and clamps the limit/offset query params. limit defaults to
-// the configured page size and is clamped to [1, maxPageSize]; offset defaults
-// to 0 and must be non-negative.
 func (s *Server) pagination(r *http.Request) (limit, offset int32, err error) {
 	limit = int32(s.defaultPageSize)
 	if v := r.URL.Query().Get("limit"); v != "" {

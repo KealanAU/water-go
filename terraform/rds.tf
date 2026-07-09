@@ -1,5 +1,4 @@
-# Managed Postgres (TimescaleDB runs as an extension). Lives in the private
-# subnets and only accepts connections from the ECS task security group.
+# TimescaleDB runs as an extension on the managed Postgres instance.
 resource "aws_db_subnet_group" "this" {
   name       = "${var.project_name}-${var.environment}"
   subnet_ids = module.vpc.private_subnets

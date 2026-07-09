@@ -18,7 +18,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// Defaults for client resilience. All are overridable via options.
 const (
 	DefaultTimeout        = 30 * time.Second
 	DefaultMaxRetries     = 3
@@ -28,7 +27,6 @@ const (
 	defaultBackoffMaxWait = 30 * time.Second
 )
 
-// Client calls the NVE HydAPI with client-side rate limiting and retries.
 type Client struct {
 	baseURL    string
 	apiKey     string
@@ -40,7 +38,6 @@ type Client struct {
 	limiter     *rate.Limiter
 }
 
-// Option customizes a Client.
 type Option func(*Client)
 
 // WithHTTPClient overrides the default HTTP client (e.g. for tests).
@@ -84,7 +81,6 @@ func WithRateLimit(rps float64) Option {
 	}
 }
 
-// NewClient returns a Client for the API at baseURL, authenticating with apiKey.
 func NewClient(baseURL, apiKey string, opts ...Option) *Client {
 	c := &Client{
 		baseURL:     strings.TrimRight(baseURL, "/"),
@@ -101,7 +97,6 @@ func NewClient(baseURL, apiKey string, opts ...Option) *Client {
 	return c
 }
 
-// Stations lists stations, optionally restricted to active ones.
 func (c *Client) Stations(ctx context.Context, activeOnly bool) ([]Station, error) {
 	q := url.Values{}
 	if activeOnly {
@@ -110,7 +105,6 @@ func (c *Client) Stations(ctx context.Context, activeOnly bool) ([]Station, erro
 	return doList[Station](ctx, c, "/Stations", q)
 }
 
-// ObservationsParams selects the series returned by Observations.
 type ObservationsParams struct {
 	StationID      string
 	Parameter      int32
@@ -118,7 +112,6 @@ type ObservationsParams struct {
 	ReferenceTime  string // ISO-8601 duration (e.g. "P1D") or interval ("start/end")
 }
 
-// Observations fetches observation series for one station, parameter, and resolution.
 func (c *Client) Observations(ctx context.Context, p ObservationsParams) ([]Series, error) {
 	q := url.Values{}
 	q.Set("StationId", p.StationID)

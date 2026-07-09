@@ -33,7 +33,6 @@ func NewAnomalyDetector(s *store.Store, pub message.Publisher, log *slog.Logger,
 	return &AnomalyDetector{store: s, pub: pub, log: log, threshold: threshold, window: int32(window)}
 }
 
-// Register attaches the detector's handler to the router.
 func (d *AnomalyDetector) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("detect_anomalies", TopicStoredObservation, sub, d.handle)
 }

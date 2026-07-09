@@ -12,12 +12,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config holds all runtime settings for the ingester and the API.
 type Config struct {
 	NVEBaseURL string
 	NVEAPIKey  string
 
-	// NVE client resilience.
 	NVEMaxRetries int
 	NVERateLimit  float64 // requests per second (<= 0 disables rate limiting)
 	NVETimeout    time.Duration
@@ -37,8 +35,7 @@ type Config struct {
 	Lookback       time.Duration
 	ResolutionTime int32
 
-	APIAddr string
-	// API pagination bounds for the observations endpoint.
+	APIAddr            string
 	APIDefaultPageSize int
 	APIMaxPageSize     int
 	// Optional API auth and per-client throttling. Empty APIKeys disables auth;
@@ -51,14 +48,11 @@ type Config struct {
 	// endpoint (/metrics + /healthz).
 	MetricsAddr string
 
-	// Anomaly detection tuning.
 	AnomalyThreshold float64 // |z-score| at/above which a point is an anomaly
 	AnomalyWindow    int     // number of recent points used for rolling stats
 	AlertWebhookURL  string  // optional: POST alert JSON here (empty disables)
 }
 
-// Load reads configuration from the environment, applying defaults and
-// clamping out-of-range values.
 func Load() (*Config, error) {
 	// Best-effort: a missing .env is not an error (e.g. in containers env vars are injected).
 	_ = godotenv.Load()
@@ -114,8 +108,7 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
-// RequireNVEAPIKey errors when NVE_API_KEY is unset. The ingester needs the
-// key; the API does not, so the check is separate from Load.
+// The ingester needs the key; the API does not, so the check is separate from Load.
 func (c *Config) RequireNVEAPIKey() error {
 	if c.NVEAPIKey == "" {
 		return fmt.Errorf("NVE_API_KEY is required (set it in .env)")
