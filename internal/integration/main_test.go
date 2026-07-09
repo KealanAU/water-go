@@ -25,7 +25,6 @@ import (
 // package's tests (see TestMain). Tests must call resetDB before seeding.
 var testStore *store.Store
 
-// discardLogger keeps test output quiet.
 func discardLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 }
@@ -71,8 +70,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// resetDB truncates all data tables so each test starts clean. It runs before
-// tests that seed rows.
 func resetDB(t *testing.T) {
 	t.Helper()
 	_, err := testStore.Pool.Exec(context.Background(),

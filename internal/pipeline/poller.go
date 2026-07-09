@@ -13,9 +13,6 @@ import (
 	"github.com/KealanAU/water-go/internal/nve"
 )
 
-// Poller periodically queries the NVE HydAPI and publishes raw messages onto
-// the Watermill pipeline. It is the ingestion stage; normalisation/storage
-// happens downstream in the Normalizer.
 type Poller struct {
 	cfg       *config.Config
 	client    *nve.Client
@@ -27,7 +24,6 @@ type Poller struct {
 	stationIDs []string
 }
 
-// NewPoller returns a Poller that publishes via pub.
 func NewPoller(cfg *config.Config, client *nve.Client, pub message.Publisher, log *slog.Logger) *Poller {
 	return &Poller{cfg: cfg, client: client, publisher: pub, log: log}
 }
@@ -51,10 +47,8 @@ func (p *Poller) Run(ctx context.Context) error {
 	}
 }
 
-// syncStations fetches active stations, decides which ones to track (either the
-// explicit STATION_IDS list or, in discovery mode, up to MaxStations active
-// stations), publishes their metadata, and records the effective set on the
-// poller for pollObservations to use.
+// syncStations records the effective station set on the poller for
+// pollObservations to use, besides publishing station metadata.
 func (p *Poller) syncStations(ctx context.Context) {
 	start := time.Now()
 	stations, err := p.client.Stations(ctx, true)

@@ -101,14 +101,12 @@ func TestAPIObservationsPaginationClamp(t *testing.T) {
 	from := baseTime().Add(-time.Hour).Format(time.RFC3339)
 	to := baseTime().Add(10 * time.Hour).Format(time.RFC3339)
 
-	// limit=100 exceeds MaxPageSize=3 and must be clamped to 3.
 	rec := doGet(t, h, "/stations/c.1/observations?parameter=1000&limit=100&from="+from+"&to="+to)
 	require.Equal(t, http.StatusOK, rec.Code)
 	var rows []db.Observation
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &rows))
 	assert.Len(t, rows, 3, "limit should be clamped to MaxPageSize")
 
-	// Default page size (2) applies when limit is omitted.
 	recDefault := doGet(t, h, "/stations/c.1/observations?parameter=1000&from="+from+"&to="+to)
 	require.Equal(t, http.StatusOK, recDefault.Code)
 	var defRows []db.Observation
@@ -153,7 +151,6 @@ func TestAPIAnomalies(t *testing.T) {
 	}
 	h := apiServer()
 
-	// limit=3 is the max; request more and expect clamping.
 	rec := doGet(t, h, "/stations/e.1/anomalies?limit=100")
 	require.Equal(t, http.StatusOK, rec.Code)
 	var rows []db.Anomaly

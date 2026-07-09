@@ -50,6 +50,5 @@ func TestDiscoverLimitLargerThanInput(t *testing.T) {
 func TestDiscoverDoesNotMutateInput(t *testing.T) {
 	in := stations("c", "a", "b")
 	_ = discover(in, 0)
-	// discover copies before sorting, so the caller's slice order is preserved.
 	assert.Equal(t, []string{"c", "a", "b"}, stationIDs(in))
 }

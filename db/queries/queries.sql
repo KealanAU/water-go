@@ -12,8 +12,6 @@ ON CONFLICT (station_id) DO UPDATE SET
     masl       = EXCLUDED.masl,
     updated_at = now();
 
--- Insert an observation; on conflict, update the value/quality/correction so
--- re-polling overlapping time windows is idempotent.
 -- name: InsertObservation :exec
 INSERT INTO observations (
     time, station_id, parameter, parameter_name, unit, resolution_time, value, quality, correction
@@ -37,9 +35,6 @@ FROM observations
 WHERE station_id = $1
 ORDER BY station_id, parameter, time DESC;
 
--- Paginated per-station, per-parameter time-range lookup. LIMIT/OFFSET are
--- always supplied (and clamped by the caller) so the API never returns an
--- unbounded result set.
 -- name: ObservationsByStation :many
 SELECT time, station_id, parameter, parameter_name, unit, resolution_time, value, quality, correction, ingested_at
 FROM observations
@@ -50,8 +45,6 @@ WHERE station_id = $1
 ORDER BY time DESC
 LIMIT $5 OFFSET $6;
 
--- Recent non-null values for a (station, parameter) window, newest first. Feeds
--- the analytics rolling mean/stddev/z-score computation; LIMIT bounds the window.
 -- name: RecentValues :many
 SELECT value
 FROM observations
@@ -61,8 +54,6 @@ WHERE station_id = $1
 ORDER BY time DESC
 LIMIT $3;
 
--- Insert a detected anomaly; on conflict keep the existing row so re-processing
--- overlapping windows is idempotent.
 -- name: InsertAnomaly :exec
 INSERT INTO anomalies (
     time, station_id, parameter, parameter_name, value, mean, stddev, zscore, threshold
@@ -71,7 +62,6 @@ INSERT INTO anomalies (
 )
 ON CONFLICT (station_id, parameter, time) DO NOTHING;
 
--- Recent anomalies for a station, newest first, bounded by the caller's limit.
 -- name: ListAnomaliesByStation :many
 SELECT time, station_id, parameter, parameter_name, value, mean, stddev, zscore, threshold, detected_at
 FROM anomalies

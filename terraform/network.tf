@@ -1,9 +1,7 @@
-# Dedicated VPC with public + private subnets across `az_count` AZs.
-#
-# - Public subnets host the internet-facing ALB and the NAT gateway.
-# - Private subnets host the ECS tasks and RDS, so neither is reachable from
-#   the internet directly; outbound access (ECR pulls, NVE API calls) goes
-#   through a single NAT gateway to keep cost down.
+# Public subnets host the internet-facing ALB and the NAT gateway; private
+# subnets host the ECS tasks and RDS, so neither is reachable from the internet
+# directly. Outbound access (ECR pulls, NVE API calls) goes through a single
+# NAT gateway to keep cost down.
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, var.az_count)
 

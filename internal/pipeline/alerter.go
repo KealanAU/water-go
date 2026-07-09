@@ -26,7 +26,6 @@ type Alerter struct {
 	client     *http.Client
 }
 
-// NewAlerter returns an Alerter; an empty webhookURL disables webhook delivery.
 func NewAlerter(log *slog.Logger, webhookURL string) *Alerter {
 	return &Alerter{
 		log:        log,
@@ -35,7 +34,6 @@ func NewAlerter(log *slog.Logger, webhookURL string) *Alerter {
 	}
 }
 
-// Register attaches the alerter's handler to the router.
 func (a *Alerter) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("dispatch_alerts", TopicAlert, sub, a.handle)
 }
@@ -64,8 +62,6 @@ func (a *Alerter) handle(msg *message.Message) error {
 		return nil
 	}
 
-	// Best-effort webhook delivery: log failures but ack the message so a broken
-	// endpoint doesn't wedge the pipeline behind endless retries.
 	if err := a.postWebhook(msg.Context(), msg.Payload); err != nil {
 		metrics.AlertDispatched("webhook", "error")
 		a.log.Error("alert webhook failed", "station", alert.StationID, "err", err)

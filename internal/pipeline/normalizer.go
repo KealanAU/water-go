@@ -12,22 +12,18 @@ import (
 	"github.com/KealanAU/water-go/internal/store"
 )
 
-// Normalizer is the downstream stage: it consumes raw NVE messages, cleans them,
-// and persists them via the type-safe store. Times from the API are already
-// timezone-aware (RFC3339); values/quality may be null and are stored as such.
+// Normalizer relies on NVE times already being timezone-aware (RFC3339);
+// values/quality may be null and are stored as such.
 type Normalizer struct {
 	store *store.Store
 	pub   message.Publisher
 	log   *slog.Logger
 }
 
-// NewNormalizer returns a Normalizer that persists to s and republishes stored
-// points via pub.
 func NewNormalizer(s *store.Store, pub message.Publisher, log *slog.Logger) *Normalizer {
 	return &Normalizer{store: s, pub: pub, log: log}
 }
 
-// Register attaches the normalizer's handlers to the router.
 func (n *Normalizer) Register(router *message.Router, sub message.Subscriber) {
 	router.AddNoPublisherHandler("normalize_stations", TopicRawStations, sub, n.handleStation)
 	router.AddNoPublisherHandler("normalize_observations", TopicRawObservation, sub, n.handleObservation)
