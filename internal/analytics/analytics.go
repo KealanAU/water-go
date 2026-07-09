@@ -1,6 +1,5 @@
 // Package analytics contains pure, dependency-free statistics helpers used by
-// the anomaly-detection stage. Keeping these free of DB/Watermill concerns makes
-// them trivially unit-testable in isolation.
+// the anomaly-detection stage.
 package analytics
 
 import "math"

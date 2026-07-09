@@ -1,6 +1,6 @@
--- Anomaly records produced by the analytics stage: one row per detected
--- z-score outlier per station/parameter/timestamp. Statements are idempotent to
--- match the observations table pattern and the goose runner's boot-time apply.
+-- Anomaly records produced by the analytics stage. Statements are idempotent
+-- to match the observations table pattern and the goose runner's boot-time
+-- apply.
 
 -- +goose Up
 CREATE TABLE IF NOT EXISTS anomalies (
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS anomalies (
     zscore          DOUBLE PRECISION NOT NULL,
     threshold       DOUBLE PRECISION NOT NULL,
     detected_at     TIMESTAMPTZ      NOT NULL DEFAULT now(),
-    -- One row per station/parameter/timestamp; enables idempotent upserts.
+    -- Enables idempotent upserts.
     PRIMARY KEY (station_id, parameter, time)
 );
 

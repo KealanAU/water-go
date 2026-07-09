@@ -1,5 +1,4 @@
-# Public Application Load Balancer fronting the api service. The ingester has
-# no inbound traffic and is not attached here.
+# The ingester has no inbound traffic, so only the api service is attached here.
 
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-${var.environment}-alb"
