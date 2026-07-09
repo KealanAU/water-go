@@ -55,14 +55,6 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	return LoadWithOptions(LoadOptions{RequireNVEAPIKey: true})
-}
-
-type LoadOptions struct {
-	RequireNVEAPIKey bool
-}
-
-func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	// Best-effort: a missing .env is not an error (e.g. in containers env vars are injected).
 	_ = godotenv.Load()
 
@@ -99,9 +91,6 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 		AlertWebhookURL:  os.Getenv("ALERT_WEBHOOK_URL"),
 	}
 
-	if opts.RequireNVEAPIKey && cfg.NVEAPIKey == "" {
-		return nil, fmt.Errorf("NVE_API_KEY is required (set it in .env)")
-	}
 	if cfg.MaxStations < 1 {
 		cfg.MaxStations = 1
 	}
@@ -118,6 +107,15 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 		cfg.AnomalyWindow = 2
 	}
 	return cfg, nil
+}
+
+// RequireNVEAPIKey errors when NVE_API_KEY is unset. The ingester needs the
+// key; the API does not, so the check is separate from Load.
+func (c *Config) RequireNVEAPIKey() error {
+	if c.NVEAPIKey == "" {
+		return fmt.Errorf("NVE_API_KEY is required (set it in .env)")
+	}
+	return nil
 }
 
 // stationConfig resolves STATION_IDS into an explicit list plus a discovery

@@ -27,16 +27,23 @@ func clearEnv(t *testing.T) {
 	}
 }
 
-func TestLoadMissingAPIKeyErrors(t *testing.T) {
+func TestRequireNVEAPIKey(t *testing.T) {
 	clearEnv(t)
-	_, err := Load()
+	cfg, err := Load()
+	require.NoError(t, err)
+	assert.Empty(t, cfg.NVEAPIKey)
+	err = cfg.RequireNVEAPIKey()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "NVE_API_KEY")
+
+	t.Setenv("NVE_API_KEY", "k")
+	cfg, err = Load()
+	require.NoError(t, err)
+	assert.NoError(t, cfg.RequireNVEAPIKey())
 }
 
 func TestLoadDefaults(t *testing.T) {
 	clearEnv(t)
-	t.Setenv("NVE_API_KEY", "k")
 
 	cfg, err := Load()
 	require.NoError(t, err)
@@ -86,6 +93,7 @@ func TestLoadOverrides(t *testing.T) {
 	cfg, err := Load()
 	require.NoError(t, err)
 
+	assert.Equal(t, "k", cfg.NVEAPIKey)
 	assert.Equal(t, "http://example.test", cfg.NVEBaseURL)
 	assert.Equal(t, 7, cfg.NVEMaxRetries)
 	assert.Equal(t, 2.5, cfg.NVERateLimit)
@@ -122,7 +130,6 @@ func TestStationDiscoveryMode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			clearEnv(t)
-			t.Setenv("NVE_API_KEY", "k")
 			if tt.set {
 				t.Setenv("STATION_IDS", tt.value)
 			}
@@ -173,7 +180,6 @@ func TestClamping(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			clearEnv(t)
-			t.Setenv("NVE_API_KEY", "k")
 			for k, v := range tt.env {
 				t.Setenv(k, v)
 			}
@@ -190,7 +196,6 @@ func TestClamping(t *testing.T) {
 
 func TestInvalidValuesFallBackToDefaults(t *testing.T) {
 	clearEnv(t)
-	t.Setenv("NVE_API_KEY", "k")
 	t.Setenv("NVE_MAX_RETRIES", "not-an-int")
 	t.Setenv("NVE_RATE_LIMIT", "not-a-float")
 	t.Setenv("NVE_TIMEOUT", "not-a-duration")
@@ -207,13 +212,4 @@ func TestInvalidValuesFallBackToDefaults(t *testing.T) {
 	assert.Equal(t, 20, cfg.APIRateBurst)
 	// getEnvInts skips unparseable entries but keeps valid ones.
 	assert.Equal(t, []int32{1000, 2000}, cfg.Parameters)
-}
-
-func TestLoadWithOptionsAllowsAPIWithoutNVEKey(t *testing.T) {
-	clearEnv(t)
-
-	cfg, err := LoadWithOptions(LoadOptions{RequireNVEAPIKey: false})
-
-	require.NoError(t, err)
-	assert.Empty(t, cfg.NVEAPIKey)
 }

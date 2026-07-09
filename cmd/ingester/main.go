@@ -42,6 +42,9 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	if err := cfg.RequireNVEAPIKey(); err != nil {
+		return err
+	}
 
 	st, err := connectWithRetry(ctx, cfg.DatabaseURL, logger)
 	if err != nil {

@@ -30,7 +30,7 @@ func run(logger *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	cfg, err := config.LoadWithOptions(config.LoadOptions{RequireNVEAPIKey: false})
+	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
