@@ -2,6 +2,7 @@
 package api
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -23,12 +24,17 @@ type Server struct {
 
 	defaultPageSize int
 	maxPageSize     int
+	apiKeyHashes    [][sha256.Size]byte
+	rateLimiter     *clientRateLimiter
 }
 
 // Options configures API behavior such as pagination bounds.
 type Options struct {
 	DefaultPageSize int
 	MaxPageSize     int
+	APIKeys         []string
+	APIRateLimit    float64
+	APIRateBurst    int
 }
 
 func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
@@ -43,6 +49,8 @@ func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 		log:             log,
 		defaultPageSize: opts.DefaultPageSize,
 		maxPageSize:     opts.MaxPageSize,
+		apiKeyHashes:    hashAPIKeys(opts.APIKeys),
+		rateLimiter:     newClientRateLimiter(opts.APIRateLimit, opts.APIRateBurst),
 	}
 }
 
@@ -55,7 +63,7 @@ func (s *Server) Routes() http.Handler {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodOptions},
-		AllowedHeaders:   []string{"Accept", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-API-Key"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
@@ -68,11 +76,15 @@ func (s *Server) Routes() http.Handler {
 	// Prometheus metrics.
 	r.Handle("/metrics", metrics.Handler())
 
-	r.Route("/stations", func(r chi.Router) {
-		r.Get("/", s.handleListStations)
-		r.Get("/{id}/latest", s.handleLatest)
-		r.Get("/{id}/observations", s.handleObservations)
-		r.Get("/{id}/anomalies", s.handleAnomalies)
+	r.Group(func(r chi.Router) {
+		r.Use(s.authMiddleware, s.rateLimiter.middleware)
+
+		r.Route("/stations", func(r chi.Router) {
+			r.Get("/", s.handleListStations)
+			r.Get("/{id}/latest", s.handleLatest)
+			r.Get("/{id}/observations", s.handleObservations)
+			r.Get("/{id}/anomalies", s.handleAnomalies)
+		})
 	})
 	return r
 }
@@ -83,12 +95,22 @@ func (s *Server) requestLogger(next http.Handler) http.Handler {
 		start := time.Now()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		next.ServeHTTP(ww, r)
+		duration := time.Since(start)
+		status := ww.Status()
+		if status == 0 {
+			status = http.StatusOK
+		}
+		route := chi.RouteContext(r.Context()).RoutePattern()
+		if route == "" {
+			route = "unmatched"
+		}
+		metrics.ObserveHTTP(r.Method, route, status, duration)
 		s.log.Info("http request",
 			"method", r.Method,
 			"path", r.URL.Path,
-			"status", ww.Status(),
+			"status", status,
 			"bytes", ww.BytesWritten(),
-			"duration_ms", time.Since(start).Milliseconds(),
+			"duration_ms", duration.Milliseconds(),
 			"remote", r.RemoteAddr,
 			"request_id", middleware.GetReqID(r.Context()),
 		)

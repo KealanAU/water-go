@@ -19,7 +19,8 @@ func clearEnv(t *testing.T) {
 		"NVE_BASE_URL", "NVE_API_KEY", "NVE_MAX_RETRIES", "NVE_RATE_LIMIT", "NVE_TIMEOUT",
 		"DATABASE_URL", "POLL_INTERVAL", "STATION_IDS", "MAX_STATIONS", "PARAMETERS",
 		"LOOKBACK", "RESOLUTION_TIME", "API_ADDR", "API_DEFAULT_PAGE_SIZE", "API_MAX_PAGE_SIZE",
-		"METRICS_ADDR", "ANOMALY_THRESHOLD", "ANOMALY_WINDOW", "ALERT_WEBHOOK_URL",
+		"API_KEYS", "API_RATE_LIMIT", "API_RATE_BURST", "METRICS_ADDR", "ANOMALY_THRESHOLD",
+		"ANOMALY_WINDOW", "ALERT_WEBHOOK_URL",
 	} {
 		t.Setenv(k, "")
 		_ = os.Unsetenv(k)
@@ -54,6 +55,9 @@ func TestLoadDefaults(t *testing.T) {
 	assert.Equal(t, ":8080", cfg.APIAddr)
 	assert.Equal(t, 500, cfg.APIDefaultPageSize)
 	assert.Equal(t, 5000, cfg.APIMaxPageSize)
+	assert.Empty(t, cfg.APIKeys)
+	assert.Equal(t, 10.0, cfg.APIRateLimit)
+	assert.Equal(t, 20, cfg.APIRateBurst)
 	assert.Equal(t, 3.0, cfg.AnomalyThreshold)
 	assert.Equal(t, 100, cfg.AnomalyWindow)
 	assert.Empty(t, cfg.AlertWebhookURL)
@@ -72,6 +76,9 @@ func TestLoadOverrides(t *testing.T) {
 	t.Setenv("PARAMETERS", "1000, 2000")
 	t.Setenv("LOOKBACK", "48h")
 	t.Setenv("RESOLUTION_TIME", "1440")
+	t.Setenv("API_KEYS", "first, second")
+	t.Setenv("API_RATE_LIMIT", "3.5")
+	t.Setenv("API_RATE_BURST", "9")
 	t.Setenv("ANOMALY_THRESHOLD", "2.0")
 	t.Setenv("ANOMALY_WINDOW", "50")
 	t.Setenv("ALERT_WEBHOOK_URL", "http://hook.test")
@@ -90,6 +97,9 @@ func TestLoadOverrides(t *testing.T) {
 	assert.Equal(t, []int32{1000, 2000}, cfg.Parameters)
 	assert.Equal(t, 48*time.Hour, cfg.Lookback)
 	assert.Equal(t, int32(1440), cfg.ResolutionTime)
+	assert.Equal(t, []string{"first", "second"}, cfg.APIKeys)
+	assert.Equal(t, 3.5, cfg.APIRateLimit)
+	assert.Equal(t, 9, cfg.APIRateBurst)
 	assert.Equal(t, 2.0, cfg.AnomalyThreshold)
 	assert.Equal(t, 50, cfg.AnomalyWindow)
 	assert.Equal(t, "http://hook.test", cfg.AlertWebhookURL)
@@ -184,6 +194,8 @@ func TestInvalidValuesFallBackToDefaults(t *testing.T) {
 	t.Setenv("NVE_MAX_RETRIES", "not-an-int")
 	t.Setenv("NVE_RATE_LIMIT", "not-a-float")
 	t.Setenv("NVE_TIMEOUT", "not-a-duration")
+	t.Setenv("API_RATE_LIMIT", "not-a-float")
+	t.Setenv("API_RATE_BURST", "not-an-int")
 	t.Setenv("PARAMETERS", "1000,bad,2000")
 
 	cfg, err := Load()
@@ -191,6 +203,17 @@ func TestInvalidValuesFallBackToDefaults(t *testing.T) {
 	assert.Equal(t, 3, cfg.NVEMaxRetries)
 	assert.Equal(t, 5.0, cfg.NVERateLimit)
 	assert.Equal(t, 30*time.Second, cfg.NVETimeout)
+	assert.Equal(t, 10.0, cfg.APIRateLimit)
+	assert.Equal(t, 20, cfg.APIRateBurst)
 	// getEnvInts skips unparseable entries but keeps valid ones.
 	assert.Equal(t, []int32{1000, 2000}, cfg.Parameters)
+}
+
+func TestLoadWithOptionsAllowsAPIWithoutNVEKey(t *testing.T) {
+	clearEnv(t)
+
+	cfg, err := LoadWithOptions(LoadOptions{RequireNVEAPIKey: false})
+
+	require.NoError(t, err)
+	assert.Empty(t, cfg.NVEAPIKey)
 }

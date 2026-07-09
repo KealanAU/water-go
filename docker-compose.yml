@@ -30,6 +30,9 @@ services:
       PARAMETERS: ${PARAMETERS:-1000,1001,1003}
       RESOLUTION_TIME: ${RESOLUTION_TIME:-60}
       LOOKBACK: ${LOOKBACK:-24h}
+      ANOMALY_THRESHOLD: ${ANOMALY_THRESHOLD:-3}
+      ANOMALY_WINDOW: ${ANOMALY_WINDOW:-100}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
       METRICS_ADDR: ":9090"
     # Metrics endpoint (/metrics, /healthz), scraped by Prometheus on the
     # internal network and exposed on the host for convenience.
@@ -47,8 +50,10 @@ services:
     command: ["/usr/local/bin/api"]
     environment:
       DATABASE_URL: postgres://water:water@db:5432/water?sslmode=disable
-      NVE_API_KEY: ${NVE_API_KEY}
       API_ADDR: ":8080"
+      API_KEYS: ${API_KEYS:-}
+      API_RATE_LIMIT: ${API_RATE_LIMIT:-10}
+      API_RATE_BURST: ${API_RATE_BURST:-20}
     ports:
       - "8080:8080"
     depends_on:

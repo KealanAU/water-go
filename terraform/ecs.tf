@@ -4,19 +4,26 @@ locals {
 
   # Optional tuning env vars — only forward the ones actually set, so empty
   # strings don't override the binaries' built-in defaults.
-  optional_env_raw = {
+  ingester_optional_env_raw = {
     POLL_INTERVAL   = var.poll_interval
     STATION_IDS     = var.station_ids
     PARAMETERS      = var.parameters
     RESOLUTION_TIME = var.resolution_time
     LOOKBACK        = var.lookback
   }
-  optional_env = [
-    for k, v in local.optional_env_raw : { name = k, value = v } if v != ""
+  ingester_optional_env = [
+    for k, v in local.ingester_optional_env_raw : { name = k, value = v } if v != ""
+  ]
+
+  api_env = [
+    { name = "API_ADDR", value = ":${var.api_port}" },
+    { name = "API_RATE_LIMIT", value = tostring(var.api_rate_limit) },
+    { name = "API_RATE_BURST", value = tostring(var.api_rate_burst) },
   ]
 
   # Secrets injected via valueFrom (never plaintext in the task definition).
-  # Both services need the DB URL; only the ingester talks to NVE.
+  # Both services need the DB URL; only the ingester talks to NVE; API auth and
+  # alert webhook secrets are injected only when configured.
   db_secret = {
     name      = "DATABASE_URL"
     valueFrom = aws_secretsmanager_secret.database_url.arn
@@ -25,6 +32,23 @@ locals {
     name      = "NVE_API_KEY"
     valueFrom = aws_secretsmanager_secret.nve_api_key.arn
   }
+  api_keys_secret = {
+    name      = "API_KEYS"
+    valueFrom = aws_secretsmanager_secret.api_keys.arn
+  }
+  alert_webhook_secret = {
+    name      = "ALERT_WEBHOOK_URL"
+    valueFrom = aws_secretsmanager_secret.alert_webhook_url.arn
+  }
+  ingester_secrets = concat(
+    [local.db_secret],
+    nonsensitive(var.nve_api_key) == "" ? [] : [local.nve_secret],
+    nonsensitive(var.alert_webhook_url) == "" ? [] : [local.alert_webhook_secret],
+  )
+  api_secrets = concat(
+    [local.db_secret],
+    nonsensitive(var.api_keys) == "" ? [] : [local.api_keys_secret],
+  )
 }
 
 resource "aws_ecs_cluster" "this" {
@@ -77,8 +101,8 @@ resource "aws_ecs_task_definition" "ingester" {
     image       = local.container_image
     essential   = true
     command     = ["/usr/local/bin/ingester"]
-    secrets     = [local.db_secret, local.nve_secret]
-    environment = local.optional_env
+    secrets     = local.ingester_secrets
+    environment = local.ingester_optional_env
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -88,6 +112,12 @@ resource "aws_ecs_task_definition" "ingester" {
       }
     }
   }])
+
+  depends_on = [
+    aws_secretsmanager_secret_version.database_url,
+    aws_secretsmanager_secret_version.nve_api_key,
+    aws_secretsmanager_secret_version.alert_webhook_url,
+  ]
 }
 
 resource "aws_ecs_service" "ingester" {
@@ -121,15 +151,12 @@ resource "aws_ecs_task_definition" "api" {
   task_role_arn            = aws_iam_role.task.arn
 
   container_definitions = jsonencode([{
-    name      = "api"
-    image     = local.container_image
-    essential = true
-    command   = ["/usr/local/bin/api"]
-    secrets   = [local.db_secret]
-    environment = concat(
-      [{ name = "API_ADDR", value = ":${var.api_port}" }],
-      local.optional_env,
-    )
+    name        = "api"
+    image       = local.container_image
+    essential   = true
+    command     = ["/usr/local/bin/api"]
+    secrets     = local.api_secrets
+    environment = local.api_env
     portMappings = [{
       containerPort = var.api_port
       protocol      = "tcp"
@@ -143,6 +170,11 @@ resource "aws_ecs_task_definition" "api" {
       }
     }
   }])
+
+  depends_on = [
+    aws_secretsmanager_secret_version.database_url,
+    aws_secretsmanager_secret_version.api_keys,
+  ]
 }
 
 resource "aws_ecs_service" "api" {

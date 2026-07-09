@@ -30,7 +30,7 @@ func run(logger *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	cfg, err := config.Load()
+	cfg, err := config.LoadWithOptions(config.LoadOptions{RequireNVEAPIKey: false})
 	if err != nil {
 		return err
 	}
@@ -46,6 +46,9 @@ func run(logger *slog.Logger) error {
 		Handler: api.NewServer(st, logger, api.Options{
 			DefaultPageSize: cfg.APIDefaultPageSize,
 			MaxPageSize:     cfg.APIMaxPageSize,
+			APIKeys:         cfg.APIKeys,
+			APIRateLimit:    cfg.APIRateLimit,
+			APIRateBurst:    cfg.APIRateBurst,
 		}).Routes(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}

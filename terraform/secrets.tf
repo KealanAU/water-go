@@ -17,9 +17,29 @@ resource "aws_secretsmanager_secret" "nve_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "nve_api_key" {
-  count         = var.nve_api_key == "" ? 0 : 1
+  count         = nonsensitive(var.nve_api_key) == "" ? 0 : 1
   secret_id     = aws_secretsmanager_secret.nve_api_key.id
   secret_string = var.nve_api_key
+}
+
+resource "aws_secretsmanager_secret" "api_keys" {
+  name = "${var.project_name}-${var.environment}-api-keys"
+}
+
+resource "aws_secretsmanager_secret_version" "api_keys" {
+  count         = nonsensitive(var.api_keys) == "" ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.api_keys.id
+  secret_string = var.api_keys
+}
+
+resource "aws_secretsmanager_secret" "alert_webhook_url" {
+  name = "${var.project_name}-${var.environment}-alert-webhook-url"
+}
+
+resource "aws_secretsmanager_secret_version" "alert_webhook_url" {
+  count         = nonsensitive(var.alert_webhook_url) == "" ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.alert_webhook_url.id
+  secret_string = var.alert_webhook_url
 }
 
 # aws_db_instance.endpoint is "host:port", which slots straight into the URL.

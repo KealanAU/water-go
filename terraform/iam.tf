@@ -32,6 +32,8 @@ data "aws_iam_policy_document" "secrets_access" {
     resources = [
       aws_secretsmanager_secret.database_url.arn,
       aws_secretsmanager_secret.nve_api_key.arn,
+      aws_secretsmanager_secret.api_keys.arn,
+      aws_secretsmanager_secret.alert_webhook_url.arn,
     ]
   }
 }

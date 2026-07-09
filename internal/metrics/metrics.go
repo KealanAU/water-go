@@ -52,6 +52,19 @@ var (
 		Help: "Total number of alerts dispatched, by sink and outcome.",
 	}, []string{"sink", "outcome"})
 
+	// HTTPRequests counts API requests by route template and response status.
+	HTTPRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Total number of HTTP requests served by the API.",
+	}, []string{"method", "route", "status"})
+
+	// HTTPRequestDuration observes API request latency by route template.
+	HTTPRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "http_request_duration_seconds",
+		Help:    "Duration of API HTTP requests in seconds.",
+		Buckets: prometheus.DefBuckets,
+	}, []string{"method", "route", "status"})
+
 	// LastPollTimestamp records the Unix time of the most recent poll cycle.
 	LastPollTimestamp = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "pipeline_last_poll_timestamp_seconds",
@@ -85,4 +98,11 @@ func MarkPoll() { LastPollTimestamp.SetToCurrentTime() }
 // AlertDispatched records an alert dispatch outcome for a sink (log|webhook).
 func AlertDispatched(sink, outcome string) {
 	AlertsDispatched.WithLabelValues(sink, outcome).Inc()
+}
+
+// ObserveHTTP records an API request count and latency observation.
+func ObserveHTTP(method, route string, status int, d time.Duration) {
+	statusCode := strconv.Itoa(status)
+	HTTPRequests.WithLabelValues(method, route, statusCode).Inc()
+	HTTPRequestDuration.WithLabelValues(method, route, statusCode).Observe(d.Seconds())
 }

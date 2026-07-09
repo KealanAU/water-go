@@ -5,6 +5,12 @@ environment = "dev"
 # ingester needs it to fetch data).
 nve_api_key = ""
 
+# Optional comma-separated data API keys. Empty leaves the data endpoints public.
+api_keys = ""
+
+# Optional anomaly webhook URL used by the ingester.
+alert_webhook_url = ""
+
 # Leave empty to use the ECR repo this config creates (<repo>:latest). Set it
 # to pin a specific tag or use an external registry.
 container_image = ""
@@ -17,6 +23,9 @@ container_image = ""
 # task_memory            = 512
 # api_desired_count      = 1
 # ingester_desired_count = 1
+# api_rate_limit         = 10
+# api_rate_burst         = 20
+# alert_email            = "you@example.com"
 
 # --- Optional ingester/api tuning (empty = use binary defaults) --------------
 # poll_interval   = "15m"

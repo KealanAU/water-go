@@ -71,6 +71,20 @@ variable "nve_api_key" {
   default     = ""
 }
 
+variable "api_keys" {
+  description = "Comma-separated API keys for the public data endpoints. Empty disables API auth."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "alert_webhook_url" {
+  description = "Optional webhook URL for anomaly alerts emitted by the ingester"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # --- Compute -----------------------------------------------------------------
 
 variable "container_image" {
@@ -115,6 +129,18 @@ variable "log_retention_days" {
   default     = 14
 }
 
+variable "api_rate_limit" {
+  description = "Per-client API rate limit in requests per second. Set to 0 to disable."
+  type        = number
+  default     = 10
+}
+
+variable "api_rate_burst" {
+  description = "Per-client API rate limit burst size"
+  type        = number
+  default     = 20
+}
+
 # --- Application tuning (optional container env) ------------------------------
 #
 # These map to the optional env vars the binaries understand. Left empty means
@@ -149,4 +175,42 @@ variable "lookback" {
   description = "Ingester lookback window (e.g. 72h)"
   type        = string
   default     = ""
+}
+
+# --- Alerting ----------------------------------------------------------------
+
+variable "alert_email" {
+  description = "Optional email address subscribed to CloudWatch alarm notifications"
+  type        = string
+  default     = ""
+}
+
+variable "api_5xx_alarm_threshold" {
+  description = "Target 5xx responses in a 5-minute window before alerting"
+  type        = number
+  default     = 5
+}
+
+variable "api_latency_alarm_threshold_seconds" {
+  description = "Average ALB target response time threshold before alerting"
+  type        = number
+  default     = 2
+}
+
+variable "ecs_cpu_alarm_threshold" {
+  description = "Average ECS service CPU utilization percentage before alerting"
+  type        = number
+  default     = 80
+}
+
+variable "rds_cpu_alarm_threshold" {
+  description = "Average RDS CPU utilization percentage before alerting"
+  type        = number
+  default     = 80
+}
+
+variable "rds_free_storage_alarm_threshold_bytes" {
+  description = "RDS free storage bytes below which to alert"
+  type        = number
+  default     = 2147483648
 }

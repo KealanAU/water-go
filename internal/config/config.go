@@ -38,6 +38,11 @@ type Config struct {
 	// API pagination bounds for the observations endpoint.
 	APIDefaultPageSize int
 	APIMaxPageSize     int
+	// Optional API auth and per-client throttling. Empty APIKeys disables auth;
+	// APIRateLimit <= 0 disables API throttling.
+	APIKeys      []string
+	APIRateLimit float64
+	APIRateBurst int
 
 	// MetricsAddr is the listen address for the ingester's Prometheus metrics
 	// endpoint (/metrics + /healthz).
@@ -50,6 +55,14 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	return LoadWithOptions(LoadOptions{RequireNVEAPIKey: true})
+}
+
+type LoadOptions struct {
+	RequireNVEAPIKey bool
+}
+
+func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	// Best-effort: a missing .env is not an error (e.g. in containers env vars are injected).
 	_ = godotenv.Load()
 
@@ -75,6 +88,9 @@ func Load() (*Config, error) {
 		APIAddr:            getEnv("API_ADDR", ":8080"),
 		APIDefaultPageSize: getEnvInt("API_DEFAULT_PAGE_SIZE", 500),
 		APIMaxPageSize:     getEnvInt("API_MAX_PAGE_SIZE", 5000),
+		APIKeys:            getEnvList("API_KEYS", nil),
+		APIRateLimit:       getEnvFloat("API_RATE_LIMIT", 10.0),
+		APIRateBurst:       getEnvInt("API_RATE_BURST", 20),
 
 		MetricsAddr: getEnv("METRICS_ADDR", ":9090"),
 
@@ -83,7 +99,7 @@ func Load() (*Config, error) {
 		AlertWebhookURL:  os.Getenv("ALERT_WEBHOOK_URL"),
 	}
 
-	if cfg.NVEAPIKey == "" {
+	if opts.RequireNVEAPIKey && cfg.NVEAPIKey == "" {
 		return nil, fmt.Errorf("NVE_API_KEY is required (set it in .env)")
 	}
 	if cfg.MaxStations < 1 {

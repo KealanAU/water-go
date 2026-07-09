@@ -32,3 +32,18 @@ output "nve_api_key_secret_arn" {
   description = "Secrets Manager ARN holding the NVE HydAPI key"
   value       = aws_secretsmanager_secret.nve_api_key.arn
 }
+
+output "api_keys_secret_arn" {
+  description = "Secrets Manager ARN holding optional API keys"
+  value       = aws_secretsmanager_secret.api_keys.arn
+}
+
+output "alert_webhook_secret_arn" {
+  description = "Secrets Manager ARN holding the optional anomaly alert webhook URL"
+  value       = aws_secretsmanager_secret.alert_webhook_url.arn
+}
+
+output "alert_topic_arn" {
+  description = "SNS topic ARN used by CloudWatch alarms"
+  value       = aws_sns_topic.alerts.arn
+}
