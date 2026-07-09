@@ -12,9 +12,8 @@ import (
 	"github.com/KealanAU/water-go/internal/store"
 )
 
-// Normalizer is the downstream stage: it consumes raw NVE messages, cleans them,
-// and persists them via the type-safe store. Times from the API are already
-// timezone-aware (RFC3339); values/quality may be null and are stored as such.
+// Normalizer relies on NVE times already being timezone-aware (RFC3339);
+// values/quality may be null and are stored as such.
 type Normalizer struct {
 	store *store.Store
 	pub   message.Publisher

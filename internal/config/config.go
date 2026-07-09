@@ -44,8 +44,7 @@ type Config struct {
 	APIRateLimit float64
 	APIRateBurst int
 
-	// MetricsAddr is the listen address for the ingester's Prometheus metrics
-	// endpoint (/metrics + /healthz).
+	// Ingester only; the API serves /metrics on its own listener.
 	MetricsAddr string
 
 	AnomalyThreshold float64 // |z-score| at/above which a point is an anomaly
@@ -116,8 +115,7 @@ func (c *Config) RequireNVEAPIKey() error {
 	return nil
 }
 
-// stationConfig resolves STATION_IDS into an explicit list plus a discovery
-// flag. An unset variable keeps the historical default of a single station; an
+// An unset STATION_IDS keeps the historical default of a single station; an
 // explicit "all" (or a value that trims to empty) opts into auto-discovery.
 func stationConfig() (ids []string, discover bool) {
 	raw, set := os.LookupEnv("STATION_IDS")

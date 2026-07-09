@@ -111,8 +111,6 @@ func run(logger *slog.Logger) error {
 	return router.Run(ctx)
 }
 
-// startMetricsServer serves in the background; the caller shuts it down via
-// the returned server.
 func startMetricsServer(addr string, logger *slog.Logger) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", metrics.Handler())

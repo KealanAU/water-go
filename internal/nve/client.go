@@ -40,7 +40,6 @@ type Client struct {
 
 type Option func(*Client)
 
-// WithHTTPClient overrides the default HTTP client (e.g. for tests).
 func WithHTTPClient(hc *http.Client) Option {
 	return func(c *Client) { c.httpClient = hc }
 }
@@ -162,7 +161,6 @@ func (c *Client) get(ctx context.Context, path, u string) (io.ReadCloser, error)
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
-			// Network/transport error: retryable unless the context is done.
 			if ctx.Err() != nil || attempt >= c.maxRetries {
 				return nil, fmt.Errorf("nve: %s: %w", path, err)
 			}

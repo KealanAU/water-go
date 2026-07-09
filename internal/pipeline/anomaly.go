@@ -24,8 +24,6 @@ type AnomalyDetector struct {
 	window    int32
 }
 
-// NewAnomalyDetector returns a detector flagging |z-score| >= threshold over a
-// rolling window (floored to 2).
 func NewAnomalyDetector(s *store.Store, pub message.Publisher, log *slog.Logger, threshold float64, window int) *AnomalyDetector {
 	if window < 2 {
 		window = 2

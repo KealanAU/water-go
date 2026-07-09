@@ -30,13 +30,11 @@ var (
 		Buckets: prometheus.DefBuckets,
 	}, []string{"call"})
 
-	// ObservationsStored counts observation rows persisted by the normalizer.
 	ObservationsStored = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "observations_stored_total",
 		Help: "Total number of observation rows stored.",
 	})
 
-	// AnomaliesDetected counts anomalies recorded by the detector.
 	AnomaliesDetected = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "anomalies_detected_total",
 		Help: "Total number of anomalies detected.",
@@ -47,13 +45,13 @@ var (
 		Help: "Total number of alerts dispatched, by sink and outcome.",
 	}, []string{"sink", "outcome"})
 
-	// HTTPRequests counts API requests by route template and response status.
+	// The route label is the chi route template, not the raw path, to keep
+	// cardinality bounded.
 	HTTPRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "http_requests_total",
 		Help: "Total number of HTTP requests served by the API.",
 	}, []string{"method", "route", "status"})
 
-	// HTTPRequestDuration observes API request latency by route template.
 	HTTPRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "http_request_duration_seconds",
 		Help:    "Duration of API HTTP requests in seconds.",

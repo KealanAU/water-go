@@ -17,9 +17,8 @@ const (
 	TopicAlert             = "alert"
 )
 
-// StoredSeries is published on TopicStoredObservation after the Normalizer
-// persists a series. It carries the metadata plus the points the anomaly
-// detector needs, decoupling downstream stages from the raw NVE shape.
+// StoredSeries carries the metadata plus the points the anomaly detector
+// needs, decoupling downstream stages from the raw NVE shape.
 type StoredSeries struct {
 	StationID     string        `json:"station_id"`
 	Parameter     int32         `json:"parameter"`
@@ -32,7 +31,6 @@ type StoredPoint struct {
 	Value float64   `json:"value"`
 }
 
-// Alert is the payload published on TopicAlert when an anomaly is detected.
 type Alert struct {
 	StationID     string    `json:"station_id"`
 	Parameter     int32     `json:"parameter"`

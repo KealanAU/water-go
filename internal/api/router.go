@@ -36,7 +36,6 @@ type Options struct {
 	APIRateBurst    int
 }
 
-// NewServer clamps invalid pagination bounds in opts to sane values.
 func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 	if opts.MaxPageSize < 1 {
 		opts.MaxPageSize = 5000
@@ -113,8 +112,6 @@ func (s *Server) requestLogger(next http.Handler) http.Handler {
 	})
 }
 
-// handleLive is the liveness probe: it reports the process is up without
-// touching any dependency, so it stays 200 even when the DB is down.
 func (s *Server) handleLive(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

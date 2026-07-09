@@ -31,8 +31,6 @@ type InsertAnomalyParams struct {
 	Threshold     float64   `json:"threshold"`
 }
 
-// On conflict, keep the existing row so re-processing overlapping windows is
-// idempotent.
 func (q *Queries) InsertAnomaly(ctx context.Context, arg InsertAnomalyParams) error {
 	_, err := q.db.Exec(ctx, insertAnomaly,
 		arg.Time,
@@ -72,8 +70,6 @@ type InsertObservationParams struct {
 	Correction     *int32    `json:"correction"`
 }
 
-// On conflict, update the value/quality/correction so re-polling overlapping
-// time windows is idempotent.
 func (q *Queries) InsertObservation(ctx context.Context, arg InsertObservationParams) error {
 	_, err := q.db.Exec(ctx, insertObservation,
 		arg.Time,
@@ -226,8 +222,6 @@ type ObservationsByStationParams struct {
 	Offset    int32     `json:"offset"`
 }
 
-// LIMIT/OFFSET are always supplied (and clamped by the caller) so the API
-// never returns an unbounded result set.
 func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByStationParams) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, observationsByStation,
 		arg.StationID,
@@ -282,8 +276,6 @@ type RecentValuesParams struct {
 	Limit     int32  `json:"limit"`
 }
 
-// Feeds the analytics rolling mean/stddev/z-score computation; LIMIT bounds
-// the window.
 func (q *Queries) RecentValues(ctx context.Context, arg RecentValuesParams) ([]*float64, error) {
 	rows, err := q.db.Query(ctx, recentValues, arg.StationID, arg.Parameter, arg.Limit)
 	if err != nil {
