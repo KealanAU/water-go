@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS observations (
     quality         INTEGER,
     correction      INTEGER,
     ingested_at     TIMESTAMPTZ      NOT NULL DEFAULT now(),
-    -- One row per station/parameter/resolution/timestamp; enables idempotent upserts.
+    -- Enables idempotent upserts.
     PRIMARY KEY (station_id, parameter, resolution_time, time)
 );
 

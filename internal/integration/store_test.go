@@ -37,7 +37,6 @@ func TestUpsertStationRoundTrip(t *testing.T) {
 	ctx := context.Background()
 
 	seedStation(t, "1.1.1")
-	// Upsert again with changed metadata to verify it updates in place.
 	require.NoError(t, testStore.Queries.UpsertStation(ctx, db.UpsertStationParams{
 		StationID: "1.1.1",
 		Name:      "Renamed",

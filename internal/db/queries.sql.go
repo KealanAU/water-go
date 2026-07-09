@@ -31,8 +31,6 @@ type InsertAnomalyParams struct {
 	Threshold     float64   `json:"threshold"`
 }
 
-// Insert a detected anomaly; on conflict keep the existing row so re-processing
-// overlapping windows is idempotent.
 func (q *Queries) InsertAnomaly(ctx context.Context, arg InsertAnomalyParams) error {
 	_, err := q.db.Exec(ctx, insertAnomaly,
 		arg.Time,
@@ -72,8 +70,6 @@ type InsertObservationParams struct {
 	Correction     *int32    `json:"correction"`
 }
 
-// Insert an observation; on conflict, update the value/quality/correction so
-// re-polling overlapping time windows is idempotent.
 func (q *Queries) InsertObservation(ctx context.Context, arg InsertObservationParams) error {
 	_, err := q.db.Exec(ctx, insertObservation,
 		arg.Time,
@@ -141,7 +137,6 @@ type ListAnomaliesByStationParams struct {
 	Limit     int32  `json:"limit"`
 }
 
-// Recent anomalies for a station, newest first, bounded by the caller's limit.
 func (q *Queries) ListAnomaliesByStation(ctx context.Context, arg ListAnomaliesByStationParams) ([]Anomaly, error) {
 	rows, err := q.db.Query(ctx, listAnomaliesByStation, arg.StationID, arg.Limit)
 	if err != nil {
@@ -227,9 +222,6 @@ type ObservationsByStationParams struct {
 	Offset    int32     `json:"offset"`
 }
 
-// Paginated per-station, per-parameter time-range lookup. LIMIT/OFFSET are
-// always supplied (and clamped by the caller) so the API never returns an
-// unbounded result set.
 func (q *Queries) ObservationsByStation(ctx context.Context, arg ObservationsByStationParams) ([]Observation, error) {
 	rows, err := q.db.Query(ctx, observationsByStation,
 		arg.StationID,
@@ -284,8 +276,6 @@ type RecentValuesParams struct {
 	Limit     int32  `json:"limit"`
 }
 
-// Recent non-null values for a (station, parameter) window, newest first. Feeds
-// the analytics rolling mean/stddev/z-score computation; LIMIT bounds the window.
 func (q *Queries) RecentValues(ctx context.Context, arg RecentValuesParams) ([]*float64, error) {
 	rows, err := q.db.Query(ctx, recentValues, arg.StationID, arg.Parameter, arg.Limit)
 	if err != nil {

@@ -1,8 +1,3 @@
-# Secrets Manager holds everything the containers shouldn't see in plaintext:
-# the generated DB password, the NVE API key, and the fully composed
-# DATABASE_URL. The last one is injected into ECS via `secrets` (valueFrom) so
-# the connection string never appears in the task definition or console.
-
 resource "aws_secretsmanager_secret" "db_password" {
   name = "${var.project_name}-${var.environment}-db-password"
 }

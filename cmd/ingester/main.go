@@ -79,8 +79,8 @@ func run(logger *slog.Logger) error {
 	alerter := pipeline.NewAlerter(logger, cfg.AlertWebhookURL)
 	alerter.Register(router, pubSub)
 
-	// Lightweight metrics-only HTTP server. The ingester produces most of the
-	// pipeline metrics, so Prometheus scrapes it here.
+	// The ingester produces most of the pipeline metrics, so Prometheus
+	// scrapes it here.
 	metricsSrv := startMetricsServer(cfg.MetricsAddr, logger)
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -111,9 +111,6 @@ func run(logger *slog.Logger) error {
 	return router.Run(ctx)
 }
 
-// startMetricsServer launches a background HTTP server exposing Prometheus
-// metrics at /metrics and a liveness probe at /healthz. The caller shuts it
-// down via the returned server.
 func startMetricsServer(addr string, logger *slog.Logger) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", metrics.Handler())

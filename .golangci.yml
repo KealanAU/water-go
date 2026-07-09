@@ -17,6 +17,12 @@ linters:
         - performance
     misspell:
       locale: US
+    revive:
+      rules:
+        # Doc comments are only written where names aren't self-explanatory,
+        # so don't require them on every exported symbol.
+        - name: exported
+          disabled: true
   exclusions:
     generated: lax
     # sqlc-generated code is not hand-maintained.

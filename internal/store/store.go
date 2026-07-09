@@ -15,13 +15,11 @@ import (
 	"github.com/KealanAU/water-go/internal/db"
 )
 
-// Store bundles the pgx pool with the sqlc-generated queries.
 type Store struct {
 	Pool    *pgxpool.Pool
 	Queries *db.Queries
 }
 
-// New connects to databaseURL and verifies the connection with a ping.
 func New(ctx context.Context, databaseURL string) (*Store, error) {
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
@@ -34,7 +32,6 @@ func New(ctx context.Context, databaseURL string) (*Store, error) {
 	return &Store{Pool: pool, Queries: db.New(pool)}, nil
 }
 
-// Close releases the underlying connection pool.
 func (s *Store) Close() { s.Pool.Close() }
 
 // Migrate applies the embedded SQL migrations using goose. goose tracks applied
