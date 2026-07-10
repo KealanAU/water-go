@@ -25,8 +25,8 @@ func NewNormalizer(s *store.Store, pub message.Publisher, log *slog.Logger) *Nor
 }
 
 func (n *Normalizer) Register(router *message.Router, sub message.Subscriber) {
-	router.AddNoPublisherHandler("normalize_stations", TopicRawStations, sub, n.handleStation)
-	router.AddNoPublisherHandler("normalize_observations", TopicRawObservation, sub, n.handleObservation)
+	router.AddConsumerHandler("normalize_stations", TopicRawStations, sub, n.handleStation)
+	router.AddConsumerHandler("normalize_observations", TopicRawObservation, sub, n.handleObservation)
 }
 
 func (n *Normalizer) handleStation(msg *message.Message) error {
