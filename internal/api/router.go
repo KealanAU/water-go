@@ -56,7 +56,9 @@ func NewServer(s *store.Store, log *slog.Logger, opts Options) *Server {
 func (s *Server) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
+	// ponytail: no-arg ClientIPFromXFF trusts exactly one hop (the ALB); pass
+	// its CIDRs if another proxy is ever added in front.
+	r.Use(middleware.ClientIPFromXFF())
 	r.Use(s.requestLogger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
@@ -106,7 +108,7 @@ func (s *Server) requestLogger(next http.Handler) http.Handler {
 			"status", status,
 			"bytes", ww.BytesWritten(),
 			"duration_ms", duration.Milliseconds(),
-			"remote", r.RemoteAddr,
+			"remote", clientKey(r),
 			"request_id", middleware.GetReqID(r.Context()),
 		)
 	})
