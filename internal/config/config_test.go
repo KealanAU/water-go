@@ -141,40 +141,23 @@ func TestStationDiscoveryMode(t *testing.T) {
 	}
 }
 
+// Page sizes and the anomaly window are clamped by their consumers, not here.
 func TestClamping(t *testing.T) {
 	tests := []struct {
 		name        string
 		env         map[string]string
 		wantMaxStat int
-		wantDefPage int
-		wantMaxPage int
 		wantThresh  float64
-		wantWindow  int
 	}{
 		{
 			name:        "max stations floored to 1",
 			env:         map[string]string{"MAX_STATIONS": "0"},
-			wantMaxStat: 1, wantDefPage: 500, wantMaxPage: 5000, wantThresh: 3.0, wantWindow: 100,
-		},
-		{
-			name:        "page sizes clamped when default exceeds max",
-			env:         map[string]string{"API_DEFAULT_PAGE_SIZE": "9000", "API_MAX_PAGE_SIZE": "100"},
-			wantMaxStat: 25, wantDefPage: 100, wantMaxPage: 100, wantThresh: 3.0, wantWindow: 100,
-		},
-		{
-			name:        "max page floored, default follows",
-			env:         map[string]string{"API_MAX_PAGE_SIZE": "0", "API_DEFAULT_PAGE_SIZE": "5"},
-			wantMaxStat: 25, wantDefPage: 1, wantMaxPage: 1, wantThresh: 3.0, wantWindow: 100,
+			wantMaxStat: 1, wantThresh: 3.0,
 		},
 		{
 			name:        "non-positive threshold reset to default",
 			env:         map[string]string{"ANOMALY_THRESHOLD": "-1"},
-			wantMaxStat: 25, wantDefPage: 500, wantMaxPage: 5000, wantThresh: 3.0, wantWindow: 100,
-		},
-		{
-			name:        "window floored to 2",
-			env:         map[string]string{"ANOMALY_WINDOW": "1"},
-			wantMaxStat: 25, wantDefPage: 500, wantMaxPage: 5000, wantThresh: 3.0, wantWindow: 2,
+			wantMaxStat: 25, wantThresh: 3.0,
 		},
 	}
 	for _, tt := range tests {
@@ -186,10 +169,7 @@ func TestClamping(t *testing.T) {
 			cfg, err := Load()
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantMaxStat, cfg.MaxStations)
-			assert.Equal(t, tt.wantDefPage, cfg.APIDefaultPageSize)
-			assert.Equal(t, tt.wantMaxPage, cfg.APIMaxPageSize)
 			assert.Equal(t, tt.wantThresh, cfg.AnomalyThreshold)
-			assert.Equal(t, tt.wantWindow, cfg.AnomalyWindow)
 		})
 	}
 }

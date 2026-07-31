@@ -4,6 +4,7 @@ package api
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -221,10 +222,10 @@ func (s *Server) pagination(r *http.Request) (limit, offset int32, err error) {
 	if v := r.URL.Query().Get("limit"); v != "" {
 		n, perr := strconv.Atoi(v)
 		if perr != nil {
-			return 0, 0, errBadParam("limit must be an integer")
+			return 0, 0, errors.New("limit must be an integer")
 		}
 		if n < 1 {
-			return 0, 0, errBadParam("limit must be >= 1")
+			return 0, 0, errors.New("limit must be >= 1")
 		}
 		if n > s.maxPageSize {
 			n = s.maxPageSize
@@ -235,21 +236,15 @@ func (s *Server) pagination(r *http.Request) (limit, offset int32, err error) {
 	if v := r.URL.Query().Get("offset"); v != "" {
 		n, perr := strconv.Atoi(v)
 		if perr != nil {
-			return 0, 0, errBadParam("offset must be an integer")
+			return 0, 0, errors.New("offset must be an integer")
 		}
 		if n < 0 {
-			return 0, 0, errBadParam("offset must be >= 0")
+			return 0, 0, errors.New("offset must be >= 0")
 		}
 		offset = int32(n)
 	}
 	return limit, offset, nil
 }
-
-type badParamError string
-
-func (e badParamError) Error() string { return string(e) }
-
-func errBadParam(msg string) error { return badParamError(msg) }
 
 func (s *Server) serverError(w http.ResponseWriter, err error) {
 	s.log.Error("api error", "err", err)

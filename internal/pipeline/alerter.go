@@ -56,17 +56,17 @@ func (a *Alerter) handle(msg *message.Message) error {
 		"zscore", alert.ZScore,
 		"threshold", alert.Threshold,
 	)
-	metrics.AlertDispatched("log", "success")
+	metrics.AlertsDispatched.WithLabelValues("log", "success").Inc()
 
 	if a.webhookURL == "" {
 		return nil
 	}
 
 	if err := a.postWebhook(msg.Context(), msg.Payload); err != nil {
-		metrics.AlertDispatched("webhook", "error")
+		metrics.AlertsDispatched.WithLabelValues("webhook", "error").Inc()
 		a.log.Error("alert webhook failed", "station", alert.StationID, "err", err)
 	} else {
-		metrics.AlertDispatched("webhook", "success")
+		metrics.AlertsDispatched.WithLabelValues("webhook", "success").Inc()
 	}
 	return nil
 }

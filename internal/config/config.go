@@ -89,20 +89,14 @@ func Load() (*Config, error) {
 		AlertWebhookURL:  os.Getenv("ALERT_WEBHOOK_URL"),
 	}
 
+	// Page sizes and the anomaly window are clamped by their consumers
+	// (api.NewServer, pipeline.NewAnomalyDetector); only values nothing else
+	// guards are clamped here.
 	if cfg.MaxStations < 1 {
 		cfg.MaxStations = 1
 	}
-	if cfg.APIMaxPageSize < 1 {
-		cfg.APIMaxPageSize = 1
-	}
-	if cfg.APIDefaultPageSize < 1 || cfg.APIDefaultPageSize > cfg.APIMaxPageSize {
-		cfg.APIDefaultPageSize = cfg.APIMaxPageSize
-	}
 	if cfg.AnomalyThreshold <= 0 {
 		cfg.AnomalyThreshold = 3.0
-	}
-	if cfg.AnomalyWindow < 2 {
-		cfg.AnomalyWindow = 2
 	}
 	return cfg, nil
 }
