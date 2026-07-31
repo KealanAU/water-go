@@ -35,7 +35,7 @@ func NewAlerter(log *slog.Logger, webhookURL string) *Alerter {
 }
 
 func (a *Alerter) Register(router *message.Router, sub message.Subscriber) {
-	router.AddNoPublisherHandler("dispatch_alerts", TopicAlert, sub, a.handle)
+	router.AddConsumerHandler("dispatch_alerts", TopicAlert, sub, a.handle)
 }
 
 func (a *Alerter) handle(msg *message.Message) error {
