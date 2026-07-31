@@ -93,7 +93,7 @@ func (n *Normalizer) handleObservation(msg *message.Message) error {
 			points = append(points, StoredPoint{Time: o.Time, Value: *o.Value})
 		}
 	}
-	metrics.ObservationsStoredAdd(stored)
+	metrics.ObservationsStored.Add(float64(stored))
 	n.log.Debug("stored observations", "station", s.StationID, "parameter", s.Parameter, "count", stored)
 
 	// Fan the stored points out to the anomaly detector. A publish failure here

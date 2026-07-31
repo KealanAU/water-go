@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -52,7 +53,7 @@ func (p *Poller) Run(ctx context.Context) error {
 func (p *Poller) syncStations(ctx context.Context) {
 	start := time.Now()
 	stations, err := p.client.Stations(ctx, true)
-	metrics.ObserveRequest("stations", start)
+	metrics.RequestDuration.WithLabelValues("stations").Observe(time.Since(start).Seconds())
 	if err != nil {
 		p.log.Error("station sync failed", "err", err)
 		return
@@ -127,9 +128,9 @@ func (p *Poller) pollObservations(ctx context.Context) {
 				ResolutionTime: p.cfg.ResolutionTime,
 				ReferenceTime:  referenceTime,
 			})
-			metrics.ObserveRequest("observations", start)
+			metrics.RequestDuration.WithLabelValues("observations").Observe(time.Since(start).Seconds())
 			if err != nil {
-				metrics.IncFetchError(param)
+				metrics.FetchErrors.WithLabelValues(strconv.Itoa(int(param))).Inc()
 				p.log.Error("fetch observations", "station", stationID, "parameter", param, "err", err)
 				continue
 			}
@@ -147,6 +148,6 @@ func (p *Poller) pollObservations(ctx context.Context) {
 			}
 		}
 	}
-	metrics.MarkPoll()
+	metrics.LastPollTimestamp.SetToCurrentTime()
 	p.log.Info("polled observations", "messages", published, "stations", len(stationIDs))
 }

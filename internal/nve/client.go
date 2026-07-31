@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	DefaultTimeout        = 30 * time.Second
-	DefaultMaxRetries     = 3
-	DefaultRateLimit      = 5.0 // requests per second
-	DefaultBurst          = 1
+	defaultTimeout        = 30 * time.Second
+	defaultMaxRetries     = 3
+	defaultRateLimit      = 5.0 // requests per second
+	defaultBurst          = 1
 	defaultBackoffBase    = 500 * time.Millisecond
 	defaultBackoffMaxWait = 30 * time.Second
 )
@@ -84,11 +84,11 @@ func NewClient(baseURL, apiKey string, opts ...Option) *Client {
 	c := &Client{
 		baseURL:     strings.TrimRight(baseURL, "/"),
 		apiKey:      apiKey,
-		httpClient:  &http.Client{Timeout: DefaultTimeout},
-		maxRetries:  DefaultMaxRetries,
+		httpClient:  &http.Client{Timeout: defaultTimeout},
+		maxRetries:  defaultMaxRetries,
 		backoffBase: defaultBackoffBase,
 		backoffMax:  defaultBackoffMaxWait,
-		limiter:     rate.NewLimiter(rate.Limit(DefaultRateLimit), DefaultBurst),
+		limiter:     rate.NewLimiter(rate.Limit(defaultRateLimit), defaultBurst),
 	}
 	for _, o := range opts {
 		o(c)

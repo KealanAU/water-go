@@ -43,7 +43,7 @@ type Alert struct {
 	Threshold     float64   `json:"threshold"`
 }
 
-func newMessage[T any](v T) (*message.Message, error) {
+func newMessage(v any) (*message.Message, error) {
 	payload, err := json.Marshal(v)
 	if err != nil {
 		return nil, err

@@ -66,27 +66,6 @@ var (
 
 func Handler() http.Handler { return promhttp.Handler() }
 
-func ObserveRequest(call string, start time.Time) {
-	RequestDuration.WithLabelValues(call).Observe(time.Since(start).Seconds())
-}
-
-func IncFetchError(parameter int32) {
-	FetchErrors.WithLabelValues(strconv.Itoa(int(parameter))).Inc()
-}
-
-func ObservationsStoredAdd(n int) {
-	if n > 0 {
-		ObservationsStored.Add(float64(n))
-	}
-}
-
-func MarkPoll() { LastPollTimestamp.SetToCurrentTime() }
-
-// AlertDispatched records an alert dispatch outcome for a sink (log|webhook).
-func AlertDispatched(sink, outcome string) {
-	AlertsDispatched.WithLabelValues(sink, outcome).Inc()
-}
-
 func ObserveHTTP(method, route string, status int, d time.Duration) {
 	statusCode := strconv.Itoa(status)
 	HTTPRequests.WithLabelValues(method, route, statusCode).Inc()
