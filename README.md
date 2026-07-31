@@ -88,7 +88,6 @@ terraform/            AWS deployment (VPC, ALB, ECS/Fargate, RDS, alarms)
 
 ```bash
 cp .env.example .env        # then set NVE_API_KEY
-make sqlc                   # generate internal/db (needed before build)
 make up                     # build + start db, ingester, api, prometheus, grafana
 ```
 
@@ -118,7 +117,6 @@ Run just the database in a container and the binaries on the host:
 
 ```bash
 docker compose up -d db     # start only TimescaleDB
-make sqlc                   # generate internal/db
 make run-ingester           # in one shell
 make run-api                # in another shell
 ```
@@ -135,7 +133,9 @@ needs Docker. `make cover` prints a per-package coverage summary.
 
 ### Regenerating database code
 
-`internal/db` is generated from `db/migrations` (schema) and `db/queries`:
+`internal/db` is generated from `db/migrations` (schema) and `db/queries` and
+committed, so a fresh clone builds without sqlc installed. Rerun after changing
+either:
 
 ```bash
 make sqlc

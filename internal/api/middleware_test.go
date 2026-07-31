@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -128,4 +129,18 @@ func TestRateLimiterLimitsPerClient(t *testing.T) {
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, req3)
 	assert.Equal(t, http.StatusNoContent, rec3.Code)
+}
+
+func TestClientKeyPrefersForwardedClientIP(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/stations", nil)
+	req.RemoteAddr = "10.0.0.1:1234"
+	req.Header.Set("X-Forwarded-For", "203.0.113.9")
+
+	var got string
+	h := middleware.ClientIPFromXFF()(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		got = clientKey(r)
+	}))
+	h.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, "203.0.113.9", got)
 }
