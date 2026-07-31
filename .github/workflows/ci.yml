@@ -106,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       # Build only — never push or load, just prove the image compiles.
       - uses: docker/build-push-action@v7
