@@ -32,7 +32,7 @@ func NewAnomalyDetector(s *store.Store, pub message.Publisher, log *slog.Logger,
 }
 
 func (d *AnomalyDetector) Register(router *message.Router, sub message.Subscriber) {
-	router.AddNoPublisherHandler("detect_anomalies", TopicStoredObservation, sub, d.handle)
+	router.AddConsumerHandler("detect_anomalies", TopicStoredObservation, sub, d.handle)
 }
 
 func (d *AnomalyDetector) handle(msg *message.Message) error {
